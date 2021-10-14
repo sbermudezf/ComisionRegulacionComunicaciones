@@ -43,4 +43,4 @@ print(source_code)
 components.html(source_code,height=600,width=1000)
 
 df2=pd.read_csv("INTERNET_MOVIL_DEMANDA_ABONADOS_7.csv",delimiter=';')
-print(df2)
+st.write(df2)
