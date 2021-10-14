@@ -10,7 +10,7 @@ def install(package):
 
 # Example
 if __name__ == '__main__':
-    install('streamlit')
+    install('streamlit_folium')
 import streamlit as st
 from streamlit_folium import folium_static
 import folium
