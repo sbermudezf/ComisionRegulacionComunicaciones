@@ -1,21 +1,15 @@
 import subprocess
 import sys
 import pip
-
+import streamlit.components.v1 as components
+import streamlit as st
 def install(package):
     if hasattr(pip, 'main'):
         pip.main(['install', package])
     else:
         pip._internal.main(['install', package])
-
-# Example
 if __name__ == '__main__':
     install('streamlit_folium')
-import streamlit as st
-from streamlit_folium import folium_static
-import folium
-
-"# streamlit-folium"
 
 with st.echo():
     import streamlit as st
@@ -33,3 +27,5 @@ with st.echo():
 
     # call to render Folium map in Streamlit
     folium_static(m)
+    
+    
