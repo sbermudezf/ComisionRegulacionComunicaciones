@@ -211,10 +211,11 @@ st.markdown(
     """,
     unsafe_allow_html=True)   
 st.markdown("""<style type="text/css">
-    h1{ background: #F08080;
+    h1{ background: #ffde00;
     text-align: center;
     padding: 15px;
     font-family: sans-serif;
+    font-size:1.60rem;
     color: black;}
     .barra-superior{top: 0;
     position: fixed;
@@ -222,14 +223,16 @@ st.markdown("""<style type="text/css">
     width: 100%;
     color:white;
     z-index: 999;
-    height: 100px;
+    height: 80px;
     left: 0px;
     text-align: center;
     padding: 15px;
     font-size: 36px;
     font-weight: 700;
     }
-    .css-1lcbmhc > div{margin-top:100px;}
+    .main, .css-1lcbmhc > div{margin-top:80px;}
+    .css-1uvyptr:hover,.css-1uvyptr {background: #ccc}
+    .block-container {padding-top:0;}
     h2{
     background: #fffdf7;
     text-align: center;
@@ -244,9 +247,15 @@ st.markdown("""<style type="text/css">
     color: black;}
     </style>""", unsafe_allow_html=True)  
 st.markdown("""<div class="barra-superior">
-<img src="https://www.postdata.gov.co/sites/all/themes/nuboot_radix/logo-crc-blanco.png"    
- alt="0" style="height: 70px; left:10px; position:fixed;">
-Batería de indicadores para el análisis de competencia
+<div style="height: 70px; left: 10px; position: fixed;">
+<a style="float:left;" href="https://www.crcom.gov.co" title="CRC">
+<img src="https://www.postdata.gov.co/sites/all/themes/nuboot_radix/logo-crc-blanco.png" alt="CRC" style="height:40px">
+</a>
+<a style="float:left; padding-left:10px;" href="https://www.postdata.gov.co" title="Postdata">
+<img src="https://www.postdata.gov.co/sites/default/files/postdata-logo.png" alt="Inicio" style="height:40px">
+</a>
+<div style="float:left;padding-left:20px;">Batería de indicadores para el análisis de competencia</div>
+</div> 
 </div>""",unsafe_allow_html=True)
 #st.sidebar.image(LogoComision2, use_column_width=True)
 indicacionesuso="""
@@ -574,10 +583,14 @@ if select_mercado == 'Telefonía local':
     
     if select_dimension == 'Departamental':
         st.write('#### Agregación departamental') 
-        select_variable = st.selectbox('Variable',['Tráfico','Líneas']) 
+        col1, col2 = st.columns(2)
+        with col1:
+            select_variable = st.selectbox('Variable',['Tráfico','Líneas']) 
+            
         DEPARTAMENTOSTRAF=sorted(Trafdpto.departamento.unique().tolist())
         DEPARTAMETNOSLIN=sorted(Lindpto.departamento.unique().tolist())
-        DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSTRAF)
+        with col2:
+            DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSTRAF)
         PERIODOSTRAF=Trafdpto[Trafdpto['departamento']==DPTO]['periodo'].unique().tolist()
         PERIODOSLIN=Lindpto[Lindpto['departamento']==DPTO]['periodo'].unique().tolist()
         
