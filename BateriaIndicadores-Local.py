@@ -194,7 +194,9 @@ LogoComision2="https://www.postdata.gov.co/sites/all/themes/nuboot_radix/logo-cr
 # Set page title and favicon.
 
 st.set_page_config(
-    page_title="Batería de indicadores", page_icon=LogoComision,layout="wide")
+    page_title="Batería de indicadores", page_icon=LogoComision,layout="wide",initial_sidebar_state="expanded")
+     
+
 st.markdown(
     """
     <style>
@@ -209,14 +211,25 @@ st.markdown(
     """,
     unsafe_allow_html=True)   
 st.markdown("""<style type="text/css">
-    h1{ background: #a2a8cd;
+    h1{ background: #F08080;
     text-align: center;
     padding: 15px;
     font-family: sans-serif;
     color: black;}
-    .gefe{top:0;
-    position:absolute;
+    .barra-superior{top: 0;
+    position: fixed;
+    background-color: #3366cc;
+    width: 100%;
+    color:white;
+    z-index: 999;
+    height: 100px;
+    left: 0px;
+    text-align: center;
+    padding: 15px;
+    font-size: 36px;
+    font-weight: 700;
     }
+    .css-1lcbmhc > div{margin-top:100px;}
     h2{
     background: #fffdf7;
     text-align: center;
@@ -229,16 +242,18 @@ st.markdown("""<style type="text/css">
     background: #fffdf7;
     padding: 10px;
     color: black;}
-    </style>""", unsafe_allow_html=True)    
-st.markdown("""<div class="gefe"> Hola </div>""",unsafe_allow_html=True)
-st.title('Batería de indicadores para el análisis de competencia')
-
-st.sidebar.image(LogoComision2, use_column_width=True)
-st.markdown("""
+    </style>""", unsafe_allow_html=True)  
+st.markdown("""<div class="barra-superior">
+<img src="https://www.postdata.gov.co/sites/all/themes/nuboot_radix/logo-crc-blanco.png"    
+ alt="0" style="height: 70px; left:10px; position:fixed;">
+Batería de indicadores para el análisis de competencia
+</div>""",unsafe_allow_html=True)
+#st.sidebar.image(LogoComision2, use_column_width=True)
+indicacionesuso="""
 <br></br>
  * Utilice el menú de la izquierda para seleccionar el indicador
  * Las gráficas y los datos apareceran debajo
-""",unsafe_allow_html=True)
+"""
 st.sidebar.markdown("""<b>Seleccione el indicador a calcular</b>""", unsafe_allow_html=True)
 
 select_mercado = st.sidebar.selectbox('Mercado',
@@ -299,7 +314,9 @@ def ReadAPIIngTL():
 
 
 if select_mercado == 'Telefonía local':   
-    st.write('## TELEFONÍA LOCAL')    
+    st.title('Telefonía local')
+    st.markdown(indicacionesuso,unsafe_allow_html=True)
+    #st.write('## TELEFONÍA LOCAL')    
     Trafico=ReadAPITrafTL()
     Ingresos=ReadAPIIngTL()
     Lineas=ReadAPILinTL()
