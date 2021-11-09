@@ -214,6 +214,9 @@ st.markdown("""<style type="text/css">
     padding: 15px;
     font-family: sans-serif;
     color: black;}
+    .gefe{top:0;
+    position:absolute;
+    }
     h2{
     background: #fffdf7;
     text-align: center;
@@ -227,6 +230,7 @@ st.markdown("""<style type="text/css">
     padding: 10px;
     color: black;}
     </style>""", unsafe_allow_html=True)    
+st.markdown("""<div class="gefe"> Hola </div>""",unsafe_allow_html=True)
 st.title('Batería de indicadores para el análisis de competencia')
 
 st.sidebar.image(LogoComision2, use_column_width=True)
