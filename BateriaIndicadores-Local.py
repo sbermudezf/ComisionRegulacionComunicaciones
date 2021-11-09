@@ -218,7 +218,7 @@ st.markdown("""<style type="text/css">
     color: black;}
     .barra-superior{top: 0;
     position: fixed;
-    background-color: #3366cc;
+    background-color: #27348b;
     width: 100%;
     color:white;
     z-index: 999;
