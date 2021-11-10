@@ -94,6 +94,7 @@ def MediaEntropica(df,column):
     dfAgg['C3MEI']=dfAgg['C2MEI']**(dfAgg['WJ'])
     dfAgg['MEI']=np.prod(np.array(dfAgg['C3MEI'].unique().tolist()))
     dfAgg['Media entropica']=[a*b*c for a,b,c in zip(dfAgg['MED'].unique().tolist(),dfAgg['MEE'].unique().tolist(),dfAgg['MEI'].unique().tolist())][0]
+    dfAgg=dfAgg[dfAgg[column]>0]
     return dfAgg['Media entropica'].unique().tolist()[0],dfAgg
 ##
 
