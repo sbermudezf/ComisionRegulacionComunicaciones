@@ -216,7 +216,12 @@ st.markdown("""<style type="text/css">
     padding: 15px;
     font-family: sans-serif;
     font-size:1.60rem;
-    color: black;}
+    color: black;
+    position:fixed;
+    width:100%;
+    z-index:9999;
+    top:80px;
+    left:0;}
     .barra-superior{top: 0;
     position: fixed;
     background-color: #27348b;
@@ -230,7 +235,8 @@ st.markdown("""<style type="text/css">
     font-size: 36px;
     font-weight: 700;
     }
-    .main, .css-1lcbmhc > div{margin-top:80px;}
+    .main, .css-1lcbmhc > div{margin-top:135px;}
+    .css-y3whyl, .css-xqnn38 {background-color:#ccc}
     .css-1uvyptr:hover,.css-1uvyptr {background: #ccc}
     .block-container {padding-top:0;}
     h2{
@@ -245,6 +251,11 @@ st.markdown("""<style type="text/css">
     background: #fffdf7;
     padding: 10px;
     color: black;}
+    @media (max-width:1170px){
+        .barra-superior{height:160px;} 
+        .main, .css-1lcbmhc > div{margin-top:215px;}
+        h1{top:160px;}
+    }    
     </style>""", unsafe_allow_html=True)  
 st.markdown("""<div class="barra-superior">
 <div style="height: 70px; left: 10px; position: fixed;">
@@ -254,22 +265,22 @@ st.markdown("""<div class="barra-superior">
 <a style="float:left; padding-left:10px;" href="https://www.postdata.gov.co" title="Postdata">
 <img src="https://www.postdata.gov.co/sites/default/files/postdata-logo.png" alt="Inicio" style="height:40px">
 </a>
-<div style="float:left;padding-left:20px;">Batería de indicadores para el análisis de competencia</div>
+<div style="float:left;padding-left:20px;line-height:1;">Batería de indicadores para el análisis de competencia</div>
 </div> 
 </div>""",unsafe_allow_html=True)
 #st.sidebar.image(LogoComision2, use_column_width=True)
 indicacionesuso="""
-<br></br>
  * Utilice el menú de la izquierda para seleccionar el indicador
  * Las gráficas y los datos apareceran debajo
 """
+
 st.sidebar.markdown("""<b>Seleccione el indicador a calcular</b>""", unsafe_allow_html=True)
 
 select_mercado = st.sidebar.selectbox('Mercado',
                                     ['Telefonía local', 'Internet fijo','Televisión por suscripción'])
 
-select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
+#select_indicador = st.sidebar.selectbox('Indicador',
+#                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
                               
 #API 
 consulta_anno = '2017,2018,2019,2020,2021,2022,2023,2024,2025'
@@ -324,8 +335,7 @@ def ReadAPIIngTL():
 
 if select_mercado == 'Telefonía local':   
     st.title('Telefonía local')
-    st.markdown(indicacionesuso,unsafe_allow_html=True)
-    #st.write('## TELEFONÍA LOCAL')    
+    st.markdown(indicacionesuso,unsafe_allow_html=True)   
     Trafico=ReadAPITrafTL()
     Ingresos=ReadAPIIngTL()
     Lineas=ReadAPILinTL()
@@ -358,12 +368,26 @@ if select_mercado == 'Telefonía local':
     select_dimension=st.sidebar.selectbox('Dimensión',['Departamental','Municipal','Nacional','Clusters'])
     
     if select_dimension == 'Nacional':
+        select_indicador = st.sidebar.selectbox('Indicador',
+                                    ['Stenbacka', 'Concentración','IHH','Linda'])
+    
+        if select_indicador == 'Stenbacka':
+            st.write("### Índice de Stenbacka")
+            st.markdown("Este indicador trata de calcular un umbral a partir del cual la entidad líder podría disfrutar de poder de mercado. Para esto parte de la participación de mercado de la empresa líder y de la empresa con la segunda participación más grande para calcular un umbral de cuota de mercado después de la cual la empresa líder presentaría posición de dominio")
+            st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+        if select_indicador == 'Concentración':
+            st.write("### Razón de concentración")
+            st.markdown("La razón de concentración de n empresas se calcula como la participación de mercado acumulada de las compañías líderes en el mercado relevante")
+            st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
+        if select_indicador == 'IHH':
+            st.write("### Índice de Herfindahl-Hirschman")
+            st.markdown("El Índice Herfindahl-Hirschman (IHH) ha sido uno de los más usados para medir concentraciones de mercados, siendo utilizado desde su planteamiento en 1982 por el Departamento de Justicia de Estados Unidos. Se calcula de la siguiente manera:")
+            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
+            st.write("donde *Si* es la participación de mercado de cada una de las empresas del mercado a analizar, dado en unidades porcentuales.")
+    
         st.write('#### Agregación nacional') 
         select_variable = st.selectbox('Variable',['Tráfico', 'Ingresos','Líneas']) 
         if select_indicador == 'Stenbacka':
-            st.write("### Indice de Stenbacka")
-            st.markdown("Este indicador trata de calcular un umbral a partir del cual la entidad líder podría disfrutar de poder de mercado. Para esto parte de la participación de mercado de la empresa líder y de la empresa con la segunda participación más grande para calcular un umbral de cuota de mercado después de la cual la empresa líder presentaría posición de dominio")
-            st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
             for elem in PERIODOS:
                 prTr=Trafnac[Trafnac['periodo']==elem]
@@ -401,9 +425,6 @@ if select_mercado == 'Telefonía local':
                 st.plotly_chart(fig3, use_container_width=True)
 
         if select_indicador == 'Concentración':
-            st.write("### Razón de concentración")
-            st.markdown("La razón de concentración de n empresas se calcula como la participación de mercado acumulada de las compañías líderes en el mercado relevante")
-            st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
             dflistTraf=[];dflistIng=[];dflistLin=[]
             
             for elem in PERIODOS:
@@ -434,10 +455,6 @@ if select_mercado == 'Telefonía local':
                 st.plotly_chart(fig6,use_container_width=True)
     
         if select_indicador == 'IHH':
-            st.write("### Indice de Herfindahl-Hirschman")
-            st.markdown("El Índice Herfindahl-Hirschman (IHH) ha sido uno de los más usados para medir concentraciones de mercados, siendo utilizado desde su planteamiento en 1982 por el Departamento de Justicia de Estados Unidos. Se calcula de la siguiente manera:")
-            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
-            st.write("donde *Si* es la participación de mercado de cada una de las empresas del mercado a analizar, dado en unidades porcentuales.")
             PERIODOS=Trafnac['periodo'].unique().tolist()
             for elem in PERIODOS:
                 prTr=Trafnac[Trafnac['periodo']==elem]
@@ -478,19 +495,44 @@ if select_mercado == 'Telefonía local':
                 st.plotly_chart(fig9,use_container_width=True)
                             
     if select_dimension == 'Municipal':
-        st.write('#### Desagregación municipal')
-        select_variable = st.selectbox('Variable',['Tráfico','Líneas'])  
-        MUNICIPIOS=sorted(Trafmuni.codigo.unique().tolist())
-        MUNICIPIOSLIN=sorted(Linmuni.codigo.unique().tolist())
-        MUNI=st.selectbox('Escoja el municipio', MUNICIPIOS)
-        PERIODOSTRAF=Trafmuni[Trafmuni['codigo']==MUNI]['periodo'].unique().tolist()
-        PERIODOSLIN=Linmuni[Linmuni['codigo']==MUNI]['periodo'].unique().tolist()        
+        select_indicador = st.sidebar.selectbox('Indicador',
+                                    ['Stenbacka', 'Concentración','IHH','Linda'])
         if select_indicador == 'Stenbacka':
             st.write("### Indice de Stenbacka")
             st.markdown("Este indicador trata de calcular un umbral a partir del cual la entidad líder podría disfrutar de poder de mercado. Para esto parte de la participación de mercado de la empresa líder y de la empresa con la segunda participación más grande para calcular un umbral de cuota de mercado después de la cual la empresa líder presentaría posición de dominio")
-            st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')
+            st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+        if select_indicador == 'Concentración':
+            st.write("### Razón de concentración")
+            st.markdown("La razón de concentración de n empresas se calcula como la participación de mercado acumulada de las compañías líderes en el mercado relevante")
+            st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
+        if select_indicador == 'IHH':
+            st.write("### Indice de Herfindahl-Hirschman")
+            st.markdown("El Índice Herfindahl-Hirschman (IHH) ha sido uno de los más usados para medir concentraciones de mercados, siendo utilizado desde su planteamiento en 1982 por el Departamento de Justicia de Estados Unidos. Se calcula de la siguiente manera:")
+            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
+            st.write("donde *Si* es la participación de mercado de cada una de las empresas del mercado a analizar, dado en unidades porcentuales.")
+        if select_indicador == 'Media entrópica':
+            st.write("### Media entrópica")
+            st.markdown("La media entrópica se descompone en tres términos multiplicativos que resultan de aplicar la definición de la misma (𝑀𝐸=𝑒−𝐼𝐸) a la descomposición del índice de Theil.")
+            st.latex(r'''ME=ME_{D}\times ME_{E}\times ME_{I}\;(1)''')
+            with st.expander("Mirar cálculo detallado"):
+                st.write("Los términos de la ecuación anterior corresponden a las siguientes definiciones:")
+                st.latex(r'''ME_{D}=\prod_{j=1}^{p}(ME_{D,j})^{w_{j}}\;(2)\;\; ; \;\;ME_{D,j}=\prod_{i\in C_{j}}\left(\frac{S_{ij}}{n_i w_j}\right)^{(S_{ij}/w_j)}\;(3)\;\; ; \;\;ME_{E}=\prod_{j=1}^{p}w_{j}^{w_j}\;(4)''')               
+                st.latex(r'''ME_{I}=\prod_{j=1}^{p}(ME_{I,j})^{w_{j}}\;(5)\;\; ; \;\;ME_{I,j}=\prod_{i\in C_{j}}\left(\frac{S_{i}}{S_{ij}}\right)^{(S_{ij}/w_j)}\;(6)''')
+                st.latex(r'''w_{j}=\sum_{i=1}^{n}S_{ij}\;,\;j=1,2,...,p\;(7)\;\;\;\;;\;\;\;\;S_{i}=\sum_{j=1}^{p}S_{ij}\;,\;i=1,2,...,n\;(8)''')
 
-            
+    
+    
+        st.write('#### Desagregación municipal')
+        col1, col2 = st.columns(2)
+        with col1:        
+            select_variable = st.selectbox('Variable',['Tráfico','Líneas'])  
+        MUNICIPIOS=sorted(Trafmuni.codigo.unique().tolist())
+        MUNICIPIOSLIN=sorted(Linmuni.codigo.unique().tolist())
+        with col2:
+            MUNI=st.selectbox('Escoja el municipio', MUNICIPIOS)
+        PERIODOSTRAF=Trafmuni[Trafmuni['codigo']==MUNI]['periodo'].unique().tolist()
+        PERIODOSLIN=Linmuni[Linmuni['codigo']==MUNI]['periodo'].unique().tolist()        
+        if select_indicador == 'Stenbacka':                        
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
             
             for periodo in PERIODOSTRAF:
@@ -522,9 +564,6 @@ if select_mercado == 'Telefonía local':
                 st.plotly_chart(fig2,use_container_width=True)
    
         if select_indicador == 'Concentración':
-            st.write("### Razón de concentración")
-            st.markdown("La razón de concentración de n empresas se calcula como la participación de mercado acumulada de las compañías líderes en el mercado relevante")
-            st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
             dflistTraf=[];dflistIng=[];dflistLin=[]
             
             for periodo in PERIODOSTRAF:
@@ -549,13 +588,7 @@ if select_mercado == 'Telefonía local':
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)   
 
-        if select_indicador == 'IHH':
-            st.write("### Indice de Herfindahl-Hirschman")
-            st.markdown("El Índice Herfindahl-Hirschman (IHH) ha sido uno de los más usados para medir concentraciones de mercados, siendo utilizado desde su planteamiento en 1982 por el Departamento de Justicia de Estados Unidos. Se calcula de la siguiente manera:")
-            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
-            st.write("donde *Si* es la participación de mercado de cada una de las empresas del mercado a analizar, dado en unidades porcentuales.")
-
-            
+        if select_indicador == 'IHH':            
             for periodo in PERIODOSTRAF:
                 prTr=Trafmuni[(Trafmuni['codigo']==MUNI)&(Trafmuni['periodo']==periodo)]
                 prLi=Linmuni[(Linmuni['codigo']==MUNI)&(Linmuni['periodo']==periodo)]
@@ -582,6 +615,32 @@ if select_mercado == 'Telefonía local':
     
     
     if select_dimension == 'Departamental':
+        select_indicador = st.sidebar.selectbox('Indicador',
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
+        
+        if select_indicador == 'Stenbacka':
+            st.write("### Índice de Stenbacka")
+            st.markdown("Este indicador trata de calcular un umbral a partir del cual la entidad líder podría disfrutar de poder de mercado. Para esto parte de la participación de mercado de la empresa líder y de la empresa con la segunda participación más grande para calcular un umbral de cuota de mercado después de la cual la empresa líder presentaría posición de dominio")
+            st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+        if select_indicador == 'Concentración':
+            st.write("### Razón de concentración")
+            st.markdown("La razón de concentración de n empresas se calcula como la participación de mercado acumulada de las compañías líderes en el mercado relevante")
+            st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
+        if select_indicador == 'IHH':
+            st.write("### Índice de Herfindahl-Hirschman")
+            st.markdown("El Índice Herfindahl-Hirschman (IHH) ha sido uno de los más usados para medir concentraciones de mercados, siendo utilizado desde su planteamiento en 1982 por el Departamento de Justicia de Estados Unidos. Se calcula de la siguiente manera:")
+            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
+            st.write("donde *Si* es la participación de mercado de cada una de las empresas del mercado a analizar, dado en unidades porcentuales.")
+        if select_indicador == 'Media entrópica':
+            st.write("### Media entrópica")
+            st.markdown("La media entrópica se descompone en tres términos multiplicativos que resultan de aplicar la definición de la misma (𝑀𝐸=𝑒−𝐼𝐸) a la descomposición del índice de Theil.")
+            st.latex(r'''ME=ME_{D}\times ME_{E}\times ME_{I}\;(1)''')
+            with st.expander("Cálculo detallado de la media entrópica"):
+                st.write("Los términos de la ecuación anterior corresponden a las siguientes definiciones:")
+                st.latex(r'''ME_{D}=\prod_{j=1}^{p}(ME_{D,j})^{w_{j}}\;(2)\;\; ; \;\;ME_{D,j}=\prod_{i\in C_{j}}\left(\frac{S_{ij}}{n_i w_j}\right)^{(S_{ij}/w_j)}\;(3)\;\; ; \;\;ME_{E}=\prod_{j=1}^{p}w_{j}^{w_j}\;(4)''')               
+                st.latex(r'''ME_{I}=\prod_{j=1}^{p}(ME_{I,j})^{w_{j}}\;(5)\;\; ; \;\;ME_{I,j}=\prod_{i\in C_{j}}\left(\frac{S_{i}}{S_{ij}}\right)^{(S_{ij}/w_j)}\;(6)''')
+                st.latex(r'''w_{j}=\sum_{i=1}^{n}S_{ij}\;,\;j=1,2,...,p\;(7)\;\;\;\;;\;\;\;\;S_{i}=\sum_{j=1}^{p}S_{ij}\;,\;i=1,2,...,n\;(8)''')
+
         st.write('#### Agregación departamental') 
         col1, col2 = st.columns(2)
         with col1:
@@ -595,10 +654,6 @@ if select_mercado == 'Telefonía local':
         PERIODOSLIN=Lindpto[Lindpto['departamento']==DPTO]['periodo'].unique().tolist()
         
         if select_indicador == 'Stenbacka':
-            st.write("### Indice de Stenbacka")
-            st.markdown("Este indicador trata de calcular un umbral a partir del cual la entidad líder podría disfrutar de poder de mercado. Para esto parte de la participación de mercado de la empresa líder y de la empresa con la segunda participación más grande para calcular un umbral de cuota de mercado después de la cual la empresa líder presentaría posición de dominio")
-            st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')
-
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)            
         
             for periodo in PERIODOSTRAF:
@@ -628,9 +683,6 @@ if select_mercado == 'Telefonía local':
                 st.plotly_chart(fig2,use_container_width=True)     
         
         if select_indicador =='Concentración':
-            st.write("### Razón de concentración")
-            st.markdown("La razón de concentración de n empresas se calcula como la participación de mercado acumulada de las compañías líderes en el mercado relevante")
-            st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
             dflistTraf=[];dflistIng=[];dflistLin=[]
 
             for periodo in PERIODOSTRAF:
@@ -640,7 +692,7 @@ if select_mercado == 'Telefonía local':
                 dflistLin.append(Concentracion(prLi,'lineas',periodo))
             ConcTraf=pd.concat(dflistTraf).fillna(1.0).reset_index().drop('index',axis=1)
             ConcLin=pd.concat(dflistLin).fillna(1.0).reset_index().drop('index',axis=1)
-            conc=st.slider('Seleccionar nivel concentración ',1,19,1,1)
+            conc=st.slider('Seleccionar número de expresas ',1,19,1,1)
             
             #Gráficas
             fig3 = PlotlyConcentracion(ConcTraf) 
@@ -656,11 +708,6 @@ if select_mercado == 'Telefonía local':
                 st.plotly_chart(fig4,use_container_width=True)   
 
         if select_indicador == 'IHH':
-            st.write("### Indice de Herfindahl-Hirschman")
-            st.markdown("El Índice Herfindahl-Hirschman (IHH) ha sido uno de los más usados para medir concentraciones de mercados, siendo utilizado desde su planteamiento en 1982 por el Departamento de Justicia de Estados Unidos. Se calcula de la siguiente manera:")
-            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
-            st.write("donde *Si* es la participación de mercado de cada una de las empresas del mercado a analizar, dado en unidades porcentuales.")
-
             
             for periodo in PERIODOSTRAF:
                 prTr=Trafdpto[(Trafdpto['departamento']==DPTO)&(Trafdpto['periodo']==periodo)]
@@ -687,13 +734,6 @@ if select_mercado == 'Telefonía local':
                 st.plotly_chart(fig6,use_container_width=True)    
                 
         if select_indicador == 'Media entrópica':
-            st.write("### Media entrópica")
-            st.markdown("La media entrópica se descompone en tres términos multiplicativos que resultan de aplicar la definición de la misma (𝑀𝐸=𝑒−𝐼𝐸) a la descomposición del índice de Theil.")
-            st.latex(r'''ME=ME_{D}\times ME_{E}\times ME_{I}\;(1)''')
-            st.write("Donde los términos de la ecuación anterior corresponden a las siguientes definiciones:")
-            st.latex(r'''ME_{D}=\prod_{j=1}^{p}(ME_{D,j})^{w_{j}}\;(2)\;\; ; \;\;ME_{D,j}=\prod_{i\in C_{j}}\left(\frac{S_{ij}}{n_i w_j}\right)^{(S_{ij}/w_j)}\;(3)\;\; ; \;\;ME_{E}=\prod_{j=1}^{p}w_{j}^{w_j}\;(4)''')               
-            st.latex(r'''ME_{I}=\prod_{j=1}^{p}(ME_{I,j})^{w_{j}}\;(5)\;\; ; \;\;ME_{I,j}=\prod_{i\in C_{j}}\left(\frac{S_{i}}{S_{ij}}\right)^{(S_{ij}/w_j)}\;(6)''')
-            st.latex(r'''w_{j}=\sum_{i=1}^{n}S_{ij}\;,\;j=1,2,...,p\;(7)\;\;\;\;;\;\;\;\;S_{i}=\sum_{j=1}^{p}S_{ij}\;,\;i=1,2,...,n\;(8)''')
 
             for periodo in PERIODOSTRAF:
                 prTr=Trafico[(Trafico['departamento']==DPTO)&(Trafico['periodo']==periodo)]
@@ -840,4 +880,9 @@ if select_mercado == 'Telefonía local':
                 colombia_map2.keep_in_front(NIL)
 
                 folium_static(colombia_map2)                
-                
+
+if select_mercado == "Internet fijo":
+    st.write("# Internet fijo")
+    
+if select_mercado == "Televisión por suscripción":
+    st.write("# Televisión por suscripción")    
