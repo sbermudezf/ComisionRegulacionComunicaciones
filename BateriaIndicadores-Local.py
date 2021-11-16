@@ -313,8 +313,8 @@ st.markdown("""<div class="barra-superior">
 </div> 
 </div>""",unsafe_allow_html=True)
 #st.sidebar.image(LogoComision2, use_column_width=True)
-st.markdown(r""" **<center> Guía de uso de la batería de indicadores </center>**
-- Seleccione en el menú de la izquierda el mercado sobre el cuál le gustaría realizar el cálculo de los indicadores.
+st.markdown(r""" **<center><ins>Guía de uso de la batería de indicadores para el análisis de competencia</ins></center>**
+- Use el menú de la barra de la izquierda para seleccionar el mercado sobre el cuál le gustaría realizar el cálculo de los indicadores.
 - Elija la dimensión del mercado: Departamental, Municipal, Nacional.
 - Escoja el indicador a calcular.
 - Dependiendo de la dimensión y el indicador, interactúe con los parámetros establecidos, tal como periodo, municipio, número de empresas, etc.
@@ -412,7 +412,7 @@ if select_mercado == 'Telefonía local':
     if select_dimension == 'Nacional':
         select_indicador = st.sidebar.selectbox('Indicador',
                                     ['Stenbacka', 'Concentración','IHH','Linda'])
-    
+    ## Información sobre los indicadores
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
             st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
@@ -481,6 +481,8 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
     
         st.write('#### Agregación nacional') 
         select_variable = st.selectbox('Variable',['Tráfico', 'Ingresos','Líneas']) 
+        
+    ## Cálculo de los indicadores    
         if select_indicador == 'Stenbacka':
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
             for elem in PERIODOS:
@@ -528,23 +530,23 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             ConcTraf=pd.concat(dflistTraf).fillna(1.0)
             ConcIng=pd.concat(dflistIng).fillna(1.0)
             ConcLin=pd.concat(dflistLin).fillna(1.0)      
-            conc=st.slider('Seleccionar nivel concentración ',1,19,1,1)
-            
-            #Gráficas
-            fig4=PlotlyConcentracion(ConcTraf)
-            fig5=PlotlyConcentracion(ConcIng) 
-            fig6=PlotlyConcentracion(ConcLin)
-            
+                        
             if select_variable == "Tráfico":
                 colsconTraf=ConcTraf.columns.values.tolist()
+                conc=st.slider('Seleccionar el número de empresas',1,len(colsconTraf)-1,1,1)
+                fig4=PlotlyConcentracion(ConcTraf)
                 st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)
             if select_variable == "Ingresos":
                 colsconIng=ConcIng.columns.values.tolist()
+                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,1,1)
+                fig5=PlotlyConcentracion(ConcIng)
                 st.write(ConcIng.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconIng[conc]]))
                 st.plotly_chart(fig5,use_container_width=True)
             if select_variable == "Líneas":
                 colsconLin=ConcLin.columns.values.tolist()
+                conc=st.slider('Seleccione el número de empresas',1,len(colsconLin)-1,1,1)
+                fig6=PlotlyConcentracion(ConcLin)
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig6,use_container_width=True)
     
@@ -623,6 +625,7 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
     if select_dimension == 'Municipal':
         select_indicador = st.sidebar.selectbox('Indicador',
                                     ['Stenbacka', 'Concentración','IHH','Linda'])
+    ## Información sobre los indicadores                                
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
             st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
@@ -699,7 +702,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             MUNI=st.selectbox('Escoja el municipio', MUNICIPIOS)
         PERIODOSTRAF=Trafmuni[Trafmuni['codigo']==MUNI]['periodo'].unique().tolist()
         PERIODOSLIN=Linmuni[Linmuni['codigo']==MUNI]['periodo'].unique().tolist()   
-        
+    
+    ## Cálculo de los indicadores 
+    
         if select_indicador == 'Stenbacka':                        
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
             
@@ -741,18 +746,20 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 dflistLin.append(Concentracion(prLi,'lineas',periodo))
             ConcTraf=pd.concat(dflistTraf).fillna(1.0).reset_index().drop('index',axis=1)
             ConcLin=pd.concat(dflistLin).fillna(1.0).reset_index().drop('index',axis=1)
-            conc=st.slider('Seleccionar nivel concentración ',1,19,1,1)
             
-            #Gráficas
-            fig3 = PlotlyConcentracion(ConcTraf) 
-            fig4 = PlotlyConcentracion(ConcLin)
             
             if select_variable == "Tráfico":
                 colsconTraf=ConcTraf.columns.values.tolist()
+                value1= len(colsconTraf)-1 if len(colsconTraf)-1 >1 else 2
+                conc=st.slider('Seleccione el número de empresas',1,value1,1,1)
+                fig3 = PlotlyConcentracion(ConcTraf) 
                 st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
                 st.plotly_chart(fig3,use_container_width=True)   
             if select_variable == "Líneas":
                 colsconLin=ConcLin.columns.values.tolist()
+                value2= len(colsconLin)-1 if len(colsconLin)-1 >1 else 2
+                conc=st.slider('Seleccione el número de empresas',1,value2,1,1)
+                fig4 = PlotlyConcentracion(ConcLin)
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)   
 
@@ -784,7 +791,7 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
                                     ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
-        
+    ## Información sobre los indicadores    
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
             st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
@@ -923,7 +930,9 @@ $$i = 1, 2, ..., n$$
             DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSTRAF)
         PERIODOSTRAF=Trafdpto[Trafdpto['departamento']==DPTO]['periodo'].unique().tolist()
         PERIODOSLIN=Lindpto[Lindpto['departamento']==DPTO]['periodo'].unique().tolist()
-        
+    
+    ##Cálculo de los indicadores
+    
         if select_indicador == 'Stenbacka':
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)            
         
@@ -963,18 +972,20 @@ $$i = 1, 2, ..., n$$
                 dflistLin.append(Concentracion(prLi,'lineas',periodo))
             ConcTraf=pd.concat(dflistTraf).fillna(1.0).reset_index().drop('index',axis=1)
             ConcLin=pd.concat(dflistLin).fillna(1.0).reset_index().drop('index',axis=1)
-            conc=st.slider('Seleccionar número de expresas ',1,19,1,1)
             
-            #Gráficas
-            fig3 = PlotlyConcentracion(ConcTraf) 
-            fig4 = PlotlyConcentracion(ConcLin)
-            
+
             if select_variable == "Tráfico":
                 colsconTraf=ConcTraf.columns.values.tolist()
+                value1= len(colsconTraf)-1 if len(colsconTraf)-1 >1 else 2 
+                conc=st.slider('Seleccionar número de expresas ',1,value1,1,1)
+                fig3 = PlotlyConcentracion(ConcTraf) 
                 st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
                 st.plotly_chart(fig3,use_container_width=True)   
             if select_variable == "Líneas":
                 colsconLin=ConcLin.columns.values.tolist()
+                value2= len(colsconLin)-1 if len(colsconLin)-1 >1 else 2 
+                conc=st.slider('Seleccionar número de expresas ',1,value2,1,1)
+                fig4 = PlotlyConcentracion(ConcLin)
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)   
 
