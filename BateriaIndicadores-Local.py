@@ -30,6 +30,8 @@ def highlight_max(s, props=''):
 @st.cache    
 def f(dat, c='#ffffb3'):
     return [f'background-color: {c}' for i in dat]
+def Average(list):
+    return sum(list) / len(list)    
 
 ##Geojson
 gdf = gpd.read_file("colombia2.geo.json")
@@ -96,6 +98,33 @@ def MediaEntropica(df,column):
     dfAgg['Media entropica']=[a*b*c for a,b,c in zip(dfAgg['MED'].unique().tolist(),dfAgg['MEE'].unique().tolist(),dfAgg['MEI'].unique().tolist())][0]
     dfAgg=dfAgg[dfAgg[column]>0]
     return dfAgg['Media entropica'].unique().tolist()[0],dfAgg
+
+def Linda(df,column,periodo):
+    if df.empresa.nunique()==1:
+        Linda=0.0
+    else:
+        df=df[df['periodo']==periodo]
+        part=sorted(df[column]/df[column].sum(),reverse=True)
+        part=[x for x in part if x>1e-10]
+        mm=[];
+        lindlist=[];
+        for N in range(2,len(part)):
+            xi=[];
+            xNmi=[];
+            bla=part[0:N]
+            for i in range(1,len(bla)):
+                xi.append(Average(bla[:i]))
+                xNmi.append(Average(bla[i:]))
+            CocXi2=[x1/x2 for x1,x2 in zip(xi,xNmi)] 
+            Lind2=round((1/(N*(N-1)))*(sum(CocXi2[:N-1])),5)   
+            mm.append(Lind2)
+        mm.insert(0,periodo)    
+        lindlist.append(mm) 
+        Linda=pd.DataFrame.from_records(lindlist).round(4)
+        cols=[f'Linda ({i+1})' for i in range(1,len(Linda.columns))]
+        cols.insert(0,'periodo')
+        Linda.columns=cols    
+    return Linda    
 ##
 
 ##Definición funciones para graficar los indicadores:
@@ -189,6 +218,21 @@ def PlotlyMEntropica(df):
     fig.update_traces(marker_color='rgb(0,153,0)', marker_line_color='rgb(25,51,0)',
                       marker_line_width=1.5, opacity=0.5)
     return fig
+
+def PlotlyLinda(df):    
+    fig = make_subplots(rows=1,cols=1)
+    fig.add_trace(go.Bar(x=df['periodo'], y=flatten(df.iloc[:, [lind-1]].values),hovertemplate =
+    '<br><b>Periodo</b>: %{x}<br>'+                         
+    '<br><b>Concentración</b>: %{y:.4f}<br>',name=''))
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text="PERIODO",row=1, col=1)
+    fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Linda", row=1, col=1)
+    fig.update_layout(height=550,title="<b> Índice de Linda por periodo</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
+    fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)',type="log", tickvals=[0.5,0.7,0.8,0.9,1.0,1.5,2.0,3.0,5.0,10,50,100,250,500,750,1000])
+    fig.update_traces(marker_color='rgb(127,0,255)', marker_line_color='rgb(51,0,102)',
+                  marker_line_width=1.5, opacity=0.4)
+    return fig
         
 LogoComision="data:image/png;base64,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"
 LogoComision2="https://www.postdata.gov.co/sites/all/themes/nuboot_radix/logo-crc-blanco.png"
@@ -197,7 +241,6 @@ LogoComision2="https://www.postdata.gov.co/sites/all/themes/nuboot_radix/logo-cr
 st.set_page_config(
     page_title="Batería de indicadores", page_icon=LogoComision,layout="wide",initial_sidebar_state="expanded")
      
-
 st.markdown(
     """
     <style>
@@ -270,18 +313,17 @@ st.markdown("""<div class="barra-superior">
 </div> 
 </div>""",unsafe_allow_html=True)
 #st.sidebar.image(LogoComision2, use_column_width=True)
-indicacionesuso="""
- * Utilice el menú de la izquierda para seleccionar el indicador
- * Las gráficas y los datos apareceran debajo
-"""
-
+st.markdown(r""" **<center> Guía de uso de la batería de indicadores </center>**
+- Seleccione en el menú de la izquierda el mercado sobre el cuál le gustaría realizar el cálculo de los indicadores.
+- Elija la dimensión del mercado: Departamental, Municipal, Nacional.
+- Escoja el indicador a calcular.
+- Dependiendo de la dimensión y el indicador, interactúe con los parámetros establecidos, tal como periodo, municipio, número de empresas, etc.
+ 
+""",unsafe_allow_html=True)  
 st.sidebar.markdown("""<b>Seleccione el indicador a calcular</b>""", unsafe_allow_html=True)
 
 select_mercado = st.sidebar.selectbox('Mercado',
                                     ['Telefonía local', 'Internet fijo','Televisión por suscripción'])
-
-#select_indicador = st.sidebar.selectbox('Indicador',
-#                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
                               
 #API 
 consulta_anno = '2017,2018,2019,2020,2021,2022,2023,2024,2025'
@@ -335,8 +377,7 @@ def ReadAPIIngTL():
 
 
 if select_mercado == 'Telefonía local':   
-    st.title('Telefonía local')
-    st.markdown(indicacionesuso,unsafe_allow_html=True)   
+    st.title('Telefonía local') 
     Trafico=ReadAPITrafTL()
     Ingresos=ReadAPIIngTL()
     Lineas=ReadAPILinTL()
@@ -366,7 +407,7 @@ if select_mercado == 'Telefonía local':
     dfTrafico2=[];dfIngresos2=[];dfLineas2=[]
     dfTrafico3=[];dfIngresos3=[];dfLineas3=[]
     
-    select_dimension=st.sidebar.selectbox('Dimensión',['Departamental','Municipal','Nacional','Clusters'])
+    select_dimension=st.sidebar.selectbox('Dimensión',['Departamental','Municipal','Nacional'])
     
     if select_dimension == 'Nacional':
         select_indicador = st.sidebar.selectbox('Indicador',
@@ -374,17 +415,69 @@ if select_mercado == 'Telefonía local':
     
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
-            st.markdown("Este indicador trata de calcular un umbral a partir del cual la entidad líder podría disfrutar de poder de mercado. Para esto parte de la participación de mercado de la empresa líder y de la empresa con la segunda participación más grande para calcular un umbral de cuota de mercado después de la cual la empresa líder presentaría posición de dominio")
+            st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
             st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+            with st.expander("Información adicional índice de Stenbacka"):
+                st.write(r""" **Donde**
+-   $S^2_{1}$ y $S^2_{2}$ Corresponden a las participaciones de mercado de las dos empresas más grandes, respectivamente.
+-   $\gamma$ es un parámetro de competencia que puede incluir aspectos como: existencia de compradores con poder de mercado, regulación económica, presencia de derechos de propiedad, barreras a la entrada, entre otros (Lis-Guitiérrez, 2013).                
+                """)
         if select_indicador == 'Concentración':
             st.write("### Razón de concentración")
-            st.markdown("La razón de concentración de n empresas se calcula como la participación de mercado acumulada de las compañías líderes en el mercado relevante")
+            st.markdown("Este índice mide las participaciones acumuladas de las empresas lideres en el mercado. El índice toma valores entre 0 y 1.")
             st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
+            with st.expander("Información adicional razón de concentración"):
+                st.write(r""" **Donde**:
+-   $S_{i}$ es la participación de mercado de la i-ésima empresa.
+-   $n$ es el número total de empresas consideradas.
+
+De acuerdo con Stazhkova, Kotcofana & Protasov (2017), para un $n = 3$ se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concetración | Rango         |
+|--------------|---------------|
+| Baja         | $<0,45$       |
+| Moderada     | $0,45 - 0,70$ |
+| Alta         | $>0,70$       |
+                
+                
+""")
         if select_indicador == 'IHH':
             st.write("### Índice de Herfindahl-Hirschman")
-            st.markdown("El Índice Herfindahl-Hirschman (IHH) ha sido uno de los más usados para medir concentraciones de mercados, siendo utilizado desde su planteamiento en 1982 por el Departamento de Justicia de Estados Unidos. Se calcula de la siguiente manera:")
+            st.markdown("El IHH es el índice más aceptado como medida de concentración de la oferta en un mercado. Su cálculo se expresa como la suma de los cuadrados de las participaciones de las empresas que componen el mercado. El índice máximo se obtiene para un monopolio y corresponde a 10000.")
             st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
-            st.write("donde *Si* es la participación de mercado de cada una de las empresas del mercado a analizar, dado en unidades porcentuales.")
+            with st.expander("Información adicional IHH"):
+                st.write(r"""**Donde:**
+-   $S_{i}$ es la participación de mercado de la variable analizada.
+-   $n$ es el número de empresas más grandes consideradas.
+
+De acuerdo con el Departamento de Justicia y la Comisión Federal de Comercio de Estados Unidos (2010), se puede categorizar a un mercado de acuerdo a los siguientes rangos de este índice:
+
+| Mercado                   | Rango          |
+|---------------------------|----------------|
+| Muy competitivo           | $<100$         |
+| Desconcentrado            | $100 - 1500$   |
+| Moderadamente concentrado | $>1500 - 2500$ |
+| Altamente concentrado     | $>2500$        |
+
+                
+                """)
+        if select_indicador == 'Linda':
+            st.write("### Índice de Linda")               
+            st.markdown("Este índice es utilizado para medir la desigualdad entre diferentes cuotas de mercado e identificar posibles oligopolios. El índice tomará valores cercanos a 1 en la medida que la participación en el mercado del grupo de empresas grandes es mayor que la participación del grupo de empresas pequeñas.")
+            st.latex(r'''L = \frac{1}{N(N-1)} \sum_{i=1}^{N-1} (\frac{\overline{X}_{i}}{\overline{X}_{N-i}})''')        
+            with st.expander("Información adicional indicador de linda"): 
+                st.write(r"""**Donde**:
+- $\overline{X}_{i}$ es la participación de mercado media de las primeras i-ésimas empresas.
+- $\overline{X}_{N-i}$ es la partipación de mercado media de las i-ésimas empresas restantes.
+
+De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concentración   | Rango         |
+|-----------------|---------------|
+| Baja            | $<0,20$       |
+| Moderada        | $0,20 - 0,50$ |
+| Concentrada     | $>0,50 - 1$   |
+| Alta            | $>1$          |""",unsafe_allow_html=True)        
     
         st.write('#### Agregación nacional') 
         select_variable = st.selectbox('Variable',['Tráfico', 'Ingresos','Líneas']) 
@@ -494,35 +587,108 @@ if select_mercado == 'Telefonía local':
             if select_variable == "Líneas":
                 st.write(LingroupPart3)
                 st.plotly_chart(fig9,use_container_width=True)
+                
+        if select_indicador == 'Linda':
+            dflistTraf2=[];dflistIng2=[];dflistLin2=[]
+            
+            for elem in PERIODOS:
+                dflistTraf2.append(Linda(Trafnac,'trafico',elem))
+                dflistIng2.append(Linda(Ingnac,'ingresos',elem))
+                dflistLin2.append(Linda(Linnac,'lineas',elem))
+            LindTraf=pd.concat(dflistTraf2).reset_index().drop('index',axis=1).dropna(axis=1) 
+            LindIng=pd.concat(dflistIng2).reset_index().drop('index',axis=1).dropna(axis=1) 
+            LindLin=pd.concat(dflistLin2).reset_index().drop('index',axis=1).dropna(axis=1)     
+
+
+            if select_variable == "Tráfico":
+                LindconTraf=LindTraf.columns.values.tolist()
+                lind=st.slider('Seleccionar nivel',2,len(LindconTraf),2,1)
+                fig10=PlotlyLinda(LindTraf)
+                st.write(len(LindconTraf))
+                st.write(LindTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconTraf[lind-1]]))
+                st.plotly_chart(fig10,use_container_width=True)
+            if select_variable == "Ingresos":
+                LindconIng=LindIng.columns.values.tolist()            
+                lind=st.slider('Seleccionar nivel',2,len(LindconIng),2,1)
+                fig11=PlotlyLinda(LindIng)
+                st.write(LindIng.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconIng[lind-1]]))
+                st.plotly_chart(fig11,use_container_width=True)
+            if select_variable == "Líneas":
+                LindconLin=LindLin.columns.values.tolist()            
+                lind=st.slider('Seleccionar nivel',2,len(LindconLin),2,1)
+                fig12=PlotlyLinda(LindLin)
+                st.write(LindLin.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconLin[lind-1]]))
+                st.plotly_chart(fig12,use_container_width=True)                
                             
     if select_dimension == 'Municipal':
         select_indicador = st.sidebar.selectbox('Indicador',
                                     ['Stenbacka', 'Concentración','IHH','Linda'])
         if select_indicador == 'Stenbacka':
-            st.write("### Indice de Stenbacka")
-            st.markdown("Este indicador trata de calcular un umbral a partir del cual la entidad líder podría disfrutar de poder de mercado. Para esto parte de la participación de mercado de la empresa líder y de la empresa con la segunda participación más grande para calcular un umbral de cuota de mercado después de la cual la empresa líder presentaría posición de dominio")
+            st.write("### Índice de Stenbacka")
+            st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
             st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+            with st.expander("Información adicional índice de Stenbacka"):
+                st.write(r""" **Donde**
+-   $S^2_{1}$ y $S^2_{2}$ Corresponden a las participaciones de mercado de las dos empresas más grandes, respectivamente.
+-   $\gamma$ es un parámetro de competencia que puede incluir aspectos como: existencia de compradores con poder de mercado, regulación económica, presencia de derechos de propiedad, barreras a la entrada, entre otros (Lis-Guitiérrez, 2013).                
+                """)
         if select_indicador == 'Concentración':
             st.write("### Razón de concentración")
-            st.markdown("La razón de concentración de n empresas se calcula como la participación de mercado acumulada de las compañías líderes en el mercado relevante")
+            st.markdown("Este índice mide las participaciones acumuladas de las empresas lideres en el mercado. El índice toma valores entre 0 y 1.")
             st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
-        if select_indicador == 'IHH':
-            st.write("### Indice de Herfindahl-Hirschman")
-            st.markdown("El Índice Herfindahl-Hirschman (IHH) ha sido uno de los más usados para medir concentraciones de mercados, siendo utilizado desde su planteamiento en 1982 por el Departamento de Justicia de Estados Unidos. Se calcula de la siguiente manera:")
-            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
-            st.write("donde *Si* es la participación de mercado de cada una de las empresas del mercado a analizar, dado en unidades porcentuales.")
-        if select_indicador == 'Media entrópica':
-            st.write("### Media entrópica")
-            st.markdown("La media entrópica se descompone en tres términos multiplicativos que resultan de aplicar la definición de la misma (𝑀𝐸=𝑒−𝐼𝐸) a la descomposición del índice de Theil.")
-            st.latex(r'''ME=ME_{D}\times ME_{E}\times ME_{I}\;(1)''')
-            with st.expander("Mirar cálculo detallado"):
-                st.write("Los términos de la ecuación anterior corresponden a las siguientes definiciones:")
-                st.latex(r'''ME_{D}=\prod_{j=1}^{p}(ME_{D,j})^{w_{j}}\;(2)\;\; ; \;\;ME_{D,j}=\prod_{i\in C_{j}}\left(\frac{S_{ij}}{n_i w_j}\right)^{(S_{ij}/w_j)}\;(3)\;\; ; \;\;ME_{E}=\prod_{j=1}^{p}w_{j}^{w_j}\;(4)''')               
-                st.latex(r'''ME_{I}=\prod_{j=1}^{p}(ME_{I,j})^{w_{j}}\;(5)\;\; ; \;\;ME_{I,j}=\prod_{i\in C_{j}}\left(\frac{S_{i}}{S_{ij}}\right)^{(S_{ij}/w_j)}\;(6)''')
-                st.latex(r'''w_{j}=\sum_{i=1}^{n}S_{ij}\;,\;j=1,2,...,p\;(7)\;\;\;\;;\;\;\;\;S_{i}=\sum_{j=1}^{p}S_{ij}\;,\;i=1,2,...,n\;(8)''')
+            with st.expander("Información adicional razón de concentración"):
+                st.write(r""" **Donde**:
+-   $S_{i}$ es la participación de mercado de la i-ésima empresa.
+-   $n$ es el número total de empresas consideradas.
 
-    
-    
+De acuerdo con Stazhkova, Kotcofana & Protasov (2017), para un $n = 3$ se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concetración | Rango         |
+|--------------|---------------|
+| Baja         | $<0,45$       |
+| Moderada     | $0,45 - 0,70$ |
+| Alta         | $>0,70$       |
+                
+                
+""")
+        if select_indicador == 'IHH':
+            st.write("### Índice de Herfindahl-Hirschman")
+            st.markdown("El IHH es el índice más aceptado como medida de concentración de la oferta en un mercado. Su cálculo se expresa como la suma de los cuadrados de las participaciones de las empresas que componen el mercado. El índice máximo se obtiene para un monopolio y corresponde a 10000.")
+            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
+            with st.expander("Información adicional IHH"):
+                st.write(r"""**Donde:**
+-   $S_{i}$ es la participación de mercado de la variable analizada.
+-   $n$ es el número de empresas más grandes consideradas.
+
+De acuerdo con el Departamento de Justicia y la Comisión Federal de Comercio de Estados Unidos (2010), se puede categorizar a un mercado de acuerdo a los siguientes rangos de este índice:
+
+| Mercado                   | Rango          |
+|---------------------------|----------------|
+| Muy competitivo           | $<100$         |
+| Desconcentrado            | $100 - 1500$   |
+| Moderadamente concentrado | $>1500 - 2500$ |
+| Altamente concentrado     | $>2500$        |
+
+                
+                """)
+        if select_indicador == 'Linda':
+            st.write("### Índice de Linda")               
+            st.markdown("Este índice es utilizado para medir la desigualdad entre diferentes cuotas de mercado e identificar posibles oligopolios. El índice tomará valores cercanos a 1 en la medida que la participación en el mercado del grupo de empresas grandes es mayor que la participación del grupo de empresas pequeñas.")
+            st.latex(r'''L = \frac{1}{N(N-1)} \sum_{i=1}^{N-1} (\frac{\overline{X}_{i}}{\overline{X}_{N-i}})''')        
+            with st.expander("Información adicional indicador de linda"): 
+                st.write(r"""**Donde**:
+- $\overline{X}_{i}$ es la participación de mercado media de las primeras i-ésimas empresas.
+- $\overline{X}_{N-i}$ es la partipación de mercado media de las i-ésimas empresas restantes.
+
+De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concentración   | Rango         |
+|-----------------|---------------|
+| Baja            | $<0,20$       |
+| Moderada        | $0,20 - 0,50$ |
+| Concentrada     | $>0,50 - 1$   |
+| Alta            | $>1$          |""",unsafe_allow_html=True)
+        
         st.write('#### Desagregación municipal')
         col1, col2 = st.columns(2)
         with col1:        
@@ -532,7 +698,8 @@ if select_mercado == 'Telefonía local':
         with col2:
             MUNI=st.selectbox('Escoja el municipio', MUNICIPIOS)
         PERIODOSTRAF=Trafmuni[Trafmuni['codigo']==MUNI]['periodo'].unique().tolist()
-        PERIODOSLIN=Linmuni[Linmuni['codigo']==MUNI]['periodo'].unique().tolist()        
+        PERIODOSLIN=Linmuni[Linmuni['codigo']==MUNI]['periodo'].unique().tolist()   
+        
         if select_indicador == 'Stenbacka':                        
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
             
@@ -613,35 +780,138 @@ if select_mercado == 'Telefonía local':
             if select_variable == "Líneas":
                 st.write(LingroupPart3)
                 st.plotly_chart(fig6,use_container_width=True)    
-    
-    
+        
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
                                     ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
         
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
-            st.markdown("Este indicador trata de calcular un umbral a partir del cual la entidad líder podría disfrutar de poder de mercado. Para esto parte de la participación de mercado de la empresa líder y de la empresa con la segunda participación más grande para calcular un umbral de cuota de mercado después de la cual la empresa líder presentaría posición de dominio")
+            st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
             st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+            with st.expander("Información adicional índice de Stenbacka"):
+                st.write(r""" **Donde**
+-   $S^2_{1}$ y $S^2_{2}$ Corresponden a las participaciones de mercado de las dos empresas más grandes, respectivamente.
+-   $\gamma$ es un parámetro de competencia que puede incluir aspectos como: existencia de compradores con poder de mercado, regulación económica, presencia de derechos de propiedad, barreras a la entrada, entre otros (Lis-Guitiérrez, 2013).                
+                """)
         if select_indicador == 'Concentración':
             st.write("### Razón de concentración")
-            st.markdown("La razón de concentración de n empresas se calcula como la participación de mercado acumulada de las compañías líderes en el mercado relevante")
+            st.markdown("Este índice mide las participaciones acumuladas de las empresas lideres en el mercado. El índice toma valores entre 0 y 1.")
             st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
+            with st.expander("Información adicional razón de concentración"):
+                st.write(r""" **Donde**:
+-   $S_{i}$ es la participación de mercado de la i-ésima empresa.
+-   $n$ es el número total de empresas consideradas.
+
+De acuerdo con Stazhkova, Kotcofana & Protasov (2017), para un $n = 3$ se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concetración | Rango         |
+|--------------|---------------|
+| Baja         | $<0,45$       |
+| Moderada     | $0,45 - 0,70$ |
+| Alta         | $>0,70$       |
+                
+                
+""")
         if select_indicador == 'IHH':
             st.write("### Índice de Herfindahl-Hirschman")
-            st.markdown("El Índice Herfindahl-Hirschman (IHH) ha sido uno de los más usados para medir concentraciones de mercados, siendo utilizado desde su planteamiento en 1982 por el Departamento de Justicia de Estados Unidos. Se calcula de la siguiente manera:")
+            st.markdown("El IHH es el índice más aceptado como medida de concentración de la oferta en un mercado. Su cálculo se expresa como la suma de los cuadrados de las participaciones de las empresas que componen el mercado. El índice máximo se obtiene para un monopolio y corresponde a 10000.")
             st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
-            st.write("donde *Si* es la participación de mercado de cada una de las empresas del mercado a analizar, dado en unidades porcentuales.")
+            with st.expander("Información adicional IHH"):
+                st.write(r"""**Donde:**
+-   $S_{i}$ es la participación de mercado de la variable analizada.
+-   $n$ es el número de empresas más grandes consideradas.
+
+De acuerdo con el Departamento de Justicia y la Comisión Federal de Comercio de Estados Unidos (2010), se puede categorizar a un mercado de acuerdo a los siguientes rangos de este índice:
+
+| Mercado                   | Rango          |
+|---------------------------|----------------|
+| Muy competitivo           | $<100$         |
+| Desconcentrado            | $100 - 1500$   |
+| Moderadamente concentrado | $>1500 - 2500$ |
+| Altamente concentrado     | $>2500$        |
+
+                
+                """)
+        if select_indicador == 'Linda':
+            st.write("### Índice de Linda")               
+            st.markdown("Este índice es utilizado para medir la desigualdad entre diferentes cuotas de mercado e identificar posibles oligopolios. El índice tomará valores cercanos a 1 en la medida que la participación en el mercado del grupo de empresas grandes es mayor que la participación del grupo de empresas pequeñas.")
+            st.latex(r'''L = \frac{1}{N(N-1)} \sum_{i=1}^{N-1} (\frac{\overline{X}_{i}}{\overline{X}_{N-i}})''')        
+            with st.expander("Información adicional indicador de linda"): 
+                st.write(r"""**Donde**:
+- $\overline{X}_{i}$ es la participación de mercado media de las primeras i-ésimas empresas.
+- $\overline{X}_{N-i}$ es la partipación de mercado media de las i-ésimas empresas restantes.
+
+De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concentración   | Rango         |
+|-----------------|---------------|
+| Baja            | $<0,20$       |
+| Moderada        | $0,20 - 0,50$ |
+| Concentrada     | $>0,50 - 1$   |
+| Alta            | $>1$          |""",unsafe_allow_html=True)
         if select_indicador == 'Media entrópica':
             st.write("### Media entrópica")
-            st.markdown("La media entrópica se descompone en tres términos multiplicativos que resultan de aplicar la definición de la misma (𝑀𝐸=𝑒−𝐼𝐸) a la descomposición del índice de Theil.")
-            st.latex(r'''ME=ME_{D}\times ME_{E}\times ME_{I}\;(1)''')
-            with st.expander("Cálculo detallado de la media entrópica"):
-                st.write("Los términos de la ecuación anterior corresponden a las siguientes definiciones:")
-                st.latex(r'''ME_{D}=\prod_{j=1}^{p}(ME_{D,j})^{w_{j}}\;(2)\;\; ; \;\;ME_{D,j}=\prod_{i\in C_{j}}\left(\frac{S_{ij}}{n_i w_j}\right)^{(S_{ij}/w_j)}\;(3)\;\; ; \;\;ME_{E}=\prod_{j=1}^{p}w_{j}^{w_j}\;(4)''')               
-                st.latex(r'''ME_{I}=\prod_{j=1}^{p}(ME_{I,j})^{w_{j}}\;(5)\;\; ; \;\;ME_{I,j}=\prod_{i\in C_{j}}\left(\frac{S_{i}}{S_{ij}}\right)^{(S_{ij}/w_j)}\;(6)''')
-                st.latex(r'''w_{j}=\sum_{i=1}^{n}S_{ij}\;,\;j=1,2,...,p\;(7)\;\;\;\;;\;\;\;\;S_{i}=\sum_{j=1}^{p}S_{ij}\;,\;i=1,2,...,n\;(8)''')
+            st.write(r"""La media entrópica es un índice que tiene los mismos límites superiores e inferiores del IHH/10000 (1/n a 1), donde n es el número de empresas en el mercado. El valor mayor de este índice es 1 y corresponde a una situación de monopolio. En el intermedio el índice tomará valores inferiores al IHH/10000 pero no muy distantes. Para un mercado dividido en submercados, la media entrópica se descompone en tres términos múltiplicativos:
 
+-   **Concentración dentro del submercado:** donde cada submercado trendrá su cálculo de la media entrópica. Este factor, para el mercado en conjunto, tomará valores entre 0 y 1 que representa la concentración dentro del submercado en el conjunto del mercado.
+
+-   **Concentración entre los submercados:** donde cada submercado tendrá su cuota de participación en el mercado total. Para el mercado en conjunto, este factor tomará valores entre 1/n y 1, siendo cercano a 1 en la medida que hayan pocos submercados, en relación al total, con una cuota de participación mayor en el mercado.
+
+-   **Componente de interacción:** Este factor tomará valores mayores que 1. En cada submercado su valor crecerá exponencialmente en la medida que se trate de mercados pequeños atendidos en buena parte por una o pocas empresas grandes en el mercado total. Los valores más altos de este factor para el mercado total puden interpretarse como alertas para hacer un mayor seguimiento a los submercados correspondientes.             
+            """)
+            with st.expander("Cálculo detallado de la media entrópica"):
+                st.write(r""" La media entrópica se descompone en tres terminos multiplicativos que resultan de aplicar su definición (ME) a la descomposición del índice de Theil (EI).En el cual, el índice de Theil (Theil, 1967), se representa como la suma de las participaciones del mercado multiplicada cada una por el logaritmo natural de su inverso:
+
+$$IE = \sum_{i=1}^{n} S_{i} ln\frac{1}{S_{i}}$$
+
+**Donde:**
+
+-   $S_{i}$ corresponde a la participación de cada una de las empresas del mercado.
+
+Y por su parte, la media entrópica parte del exponencial del índice de entrópia de Theil ($e^{IE}$), que de acuerdo con Taagepera y Grofman (1981) corresponde a un número efectivo de empresas comparable con el número de empresas equivalentes que se obtienen como el inverso del índice IHH (10000/IHH). Para finalmente, hayar su cálculo a través del inverso del número efectivo de Taagepera y Grofman ($e^{-IE}$) de la siguiente manera:
+
+$$ME = e_{-IE} = \prod_{i=1}^{n} S_{i}^{\frac{S_{i}}{n_{i}}}$$
+
+La media entrópica, al contrario del índice IE, pero en la misma dirección del índice IHH, aumenta cuando crece la concentración, lo cual facilita su interpretación. El límite superior del IE (mínima concentración) es un valor que depende del número de competidores (ln(n); donde n es el número de competidores), mientras que los índices ME e IHH/10000 siempre producen un valor entre cero y uno, correspondiendo para ambos la mínima concentración a 1/n cuando hay n competidores, y tomando ambos el valor de uno (1) para un mercado monopólico (máxima concentración).
+
+#### Descomposición multiplicativa de la media entrópica
+
+La descomposición multiplicativa de la media entrópica se haya de la siguiente manera:
+
+$$ME = ME_{D} * ME_{E} * ME_{I}$$
+
+**Donde:**
+
+-   $ME_{D}$ corresponde al componente de concentración dentro del submercado:
+
+$$ME_{D} = \prod_{j=1}^{p} ME_{D,j}^{w_{j}};$$
+$$ME_{D,j} = \prod_{i \in C_{j}}(\frac{S_{ij}}{n_{i}w_{j}})^{(\frac{S_{ij}}{w_{j}})}$$
+
+-   $ME_{E}$ corresponde al componente de concentración entre los submercados:
+
+$$ME_{E} = \prod_{j=1}^{p} W_{j}^{w_{j}}$$
+
+-   $ME_{I}$ corresponde al componente de interacción:
+
+$$ME_{I} = \prod_{j=1}^{p} ME_{I,j}^{w_{j}};$$
+$$ME_{I,j} = \prod_{i \in C_{j}}^{n} (\frac{S_{i}}{S_{ij}})^{(\frac{S_{ij}}{w_{j}})}$$
+
+***Donde a su vez de manera general:***
+
+-   $w_{j}$ es:
+
+$$w_{j} = \sum_{i=1}^{n} S_{ij};$$
+$$j = 1, 2, ..., p$$
+
+-   $S_{i}$ es:
+
+$$S_{i} = \sum_{j=1}^{p} S_{ij};$$
+$$i = 1, 2, ..., n$$
+
+                """)
+                
+                
         st.write('#### Agregación departamental') 
         col1, col2 = st.columns(2)
         with col1:
