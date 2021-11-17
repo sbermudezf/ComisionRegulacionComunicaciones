@@ -231,8 +231,7 @@ def PlotlyMentropicaTorta(df):
     fig.update_layout(legend=dict(
     yanchor="top",
     y=0.99,
-    xanchor="left",
-    x=0.96))
+    x=1.05))
     return fig
 
 def PlotlyLinda(df):    
