@@ -224,10 +224,15 @@ def PlotlyMentropicaTorta(df):
 #    fig = go.Figure(data=[go.Pie(labels=df.municipio.values.tolist(),
 #                             values=df.WJ.values.tolist())])
     fig.update_traces(textposition='inside')
-    fig.update_layout(uniformtext_minsize=20, uniformtext_mode='hide',height=400, width=400)
+    fig.update_layout(uniformtext_minsize=20, uniformtext_mode='hide',height=300, width=300)
     fig.update_traces(hoverinfo='label+percent', textinfo='value',
                   marker=dict(line=dict(color='#000000', width=1)))
     fig.update_layout(margin=dict(t=0, b=0, l=0, r=0))    
+    fig.update_layout(legend=dict(
+    yanchor="top",
+    y=0.99,
+    xanchor="left",
+    x=0.9))
     return fig
 
 def PlotlyLinda(df):    
@@ -346,9 +351,9 @@ st.markdown("""
 #st.sidebar.image(LogoComision2, use_column_width=True)
 st.markdown(r""" **<center><ins>Guía de uso de la batería de indicadores para el análisis de competencia</ins></center>**
 - Use el menú de la barra de la izquierda para seleccionar el mercado sobre el cuál le gustaría realizar el cálculo de los indicadores.
-- Elija la dimensión del mercado: Departamental, Municipal, Nacional.
+- Elija el ámbito del mercado: Departamental, Municipal, Nacional.
 - Escoja el indicador a calcular.
-- Dependiendo de la dimensión y el indicador, interactúe con los parámetros establecidos, tal como periodo, municipio, número de empresas, etc.
+- Dependiendo del ámbito y el indicador, interactúe con los parámetros establecidos, tal como periodo, municipio, número de empresas, etc.
 """,unsafe_allow_html=True)  
 st.sidebar.markdown("""<b>Seleccione el indicador a calcular</b>""", unsafe_allow_html=True)
 
@@ -437,7 +442,7 @@ if select_mercado == 'Telefonía local':
     dfTrafico2=[];dfIngresos2=[];dfLineas2=[]
     dfTrafico3=[];dfIngresos3=[];dfLineas3=[]
     
-    select_dimension=st.sidebar.selectbox('Dimensión',['Departamental','Municipal','Nacional'])
+    select_dimension=st.sidebar.selectbox('Ámbito',['Departamental','Municipal','Nacional'])
     
     if select_dimension == 'Nacional':
         select_indicador = st.sidebar.selectbox('Indicador',
@@ -1029,7 +1034,7 @@ $$i = 1, 2, ..., n$$
         DEPARTAMENTOSTRAF=sorted(Trafdpto.departamento.unique().tolist())
         DEPARTAMETNOSLIN=sorted(Lindpto.departamento.unique().tolist())
         with col2:
-            DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSTRAF)
+            DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSTRAF,5)
         PERIODOSTRAF=Trafdpto[Trafdpto['departamento']==DPTO]['periodo'].unique().tolist()
         PERIODOSLIN=Lindpto[Lindpto['departamento']==DPTO]['periodo'].unique().tolist()
     
@@ -1199,7 +1204,7 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Tráfico":
                 periodoME=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOSTRAF,len(PERIODOSTRAF)-1)
                 MEperiodTableTraf=MediaEntropica(Trafico[(Trafico['departamento']==DPTO)&(Trafico['periodo']==periodoME)],'trafico')[1] 
-                st.write("##### Visualización de la evolución de la media entrópica en el departamento seleccionado")
+                st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig7,use_container_width=True)
                 dfMap=[];
                 for departamento in DEPARTAMENTOSTRAF:
@@ -1210,7 +1215,6 @@ $$i = 1, 2, ..., n$$
                 TraMap=pd.concat(dfMap).reset_index().drop('index',axis=1)
                 colsME=['SIJ','SI','WJ','MED','MEE','MEI','Media entropica'] 
                 st.write(MEperiodTableTraf.reset_index(drop=True).style.apply(f, axis=0, subset=colsME))
-                st.write("##### Visualización de la media entrópica en el periodo seleccionado")
                 departamentos_df=gdf.merge(TraMap, on='id_departamento')
                 departamentos_df['media entropica']=departamentos_df['media entropica'].round(4)
                 colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
@@ -1263,16 +1267,18 @@ $$i = 1, 2, ..., n$$
                 
                 fig9=PlotlyMentropicaTorta(MunicipiosME)
                 
-                col1, col2 ,col3= st.columns([1,3, 1])
-                with col2:
+                col1, col2= st.columns(2)
+                with col1:
+                    st.write(r"""###### <center>Visualización de la media entrópica en todos los departamentos y en el periodo seleccionado</center>""",unsafe_allow_html=True)
                     folium_static(colombia_map,width=480)    
-                st.write(" ")
-                st.plotly_chart(fig9,use_container_width=True)
+                with col2:
+                    st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)                
+                    st.plotly_chart(fig9,use_container_width=True)
                 
             if select_variable == "Líneas":
                 periodoME2=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOSLIN,len(PERIODOSLIN)-1)
                 MEperiodTableLin=MediaEntropica(Lineas[(Lineas['departamento']==DPTO)&(Lineas['periodo']==periodoME2)],'lineas')[1] 
-                st.write("##### Visualización de la evolución de la media entrópica en el departamento seleccionado")
+                st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig8,use_container_width=True)
                 dfMap2=[];
                 for departamento in DEPARTAMENTOSTRAF:
@@ -1284,7 +1290,7 @@ $$i = 1, 2, ..., n$$
                 LinMap=LinMap.reset_index().drop('index',axis=1)
                 colsME=['SIJ','SI','WJ','MED','MEE','MEI','Media entropica'] 
                 st.write(MEperiodTableLin.reset_index(drop=True).style.apply(f, axis=0, subset=colsME))
-                st.write("##### Visualización de la media entrópica en el periodo seleccionado")
+                st.write(r"""##### <center>Visualización de la media entrópica en el periodo seleccionado</center>""",unsafe_allow_html=True)
                 departamentos_df2=gdf.merge(LinMap, on='id_departamento')
                 departamentos_df2['media entropica']=departamentos_df2['media entropica'].round(3)
                 colombia_map2 = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
@@ -1336,11 +1342,13 @@ $$i = 1, 2, ..., n$$
                 
                 fig10=PlotlyMentropicaTorta(MunicipiosME2)
                 
-                col1, col2 ,col3= st.columns([1,3, 1])
-                with col2:
-                    folium_static(colombia_map2,width=480)    
-                st.write(" ")
-                st.plotly_chart(fig10,use_container_width=True)                
+                col1, col2 ,= st.columns2
+                with col1:
+                    st.write(r"""###### <center>Visualización de la media entrópica en todos los departamentos y en el periodo seleccionado</center>""",unsafe_allow_html=True)
+                    folium_static(colombia_map2,width=480)
+                with col2:       
+                    st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)
+                    st.plotly_chart(fig10,use_container_width=True)                
  
             
 
