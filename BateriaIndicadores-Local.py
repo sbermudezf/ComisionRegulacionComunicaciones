@@ -232,7 +232,7 @@ def PlotlyMentropicaTorta(df):
     yanchor="top",
     y=0.99,
     xanchor="left",
-    x=0.9))
+    x=0.96))
     return fig
 
 def PlotlyLinda(df):    
