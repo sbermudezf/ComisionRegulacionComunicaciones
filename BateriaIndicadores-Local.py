@@ -9,7 +9,7 @@ import os
 from urllib.request import urlopen
 import json
 from streamlit_folium import folium_static
-from streamlit-aggrid import AgGrid
+from streamlit_aggrid import AgGrid
 import geopandas as gpd
 import folium
 
