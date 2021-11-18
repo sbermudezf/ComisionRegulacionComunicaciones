@@ -9,6 +9,7 @@ import os
 from urllib.request import urlopen
 import json
 from streamlit_folium import folium_static
+from st_aggrid import AgGrid
 import geopandas as gpd
 import folium
 
@@ -221,17 +222,15 @@ def PlotlyMEntropica(df):
 
 def PlotlyMentropicaTorta(df):
     fig = px.pie(df, values='WJ', names='municipio', color_discrete_sequence=px.colors.sequential.RdBu)
-#    fig = go.Figure(data=[go.Pie(labels=df.municipio.values.tolist(),
-#                             values=df.WJ.values.tolist())])
     fig.update_traces(textposition='inside')
-    fig.update_layout(uniformtext_minsize=20, uniformtext_mode='hide',height=300, width=300)
+    fig.update_layout(uniformtext_minsize=20, uniformtext_mode='hide',height=500, width=280)
     fig.update_traces(hoverinfo='label+percent', textinfo='value',
                   marker=dict(line=dict(color='#000000', width=1)))
-    fig.update_layout(margin=dict(t=0, b=0, l=0, r=0))    
+    fig.update_layout(margin=dict(t=0, b=0, l=0, r=0),yaxis = dict(domain=(0.1,1)))    
     fig.update_layout(legend=dict(
-    yanchor="top",
-    y=0.99,
-    x=1.05))
+    orientation='h',
+    y=0,
+    x=0.1))
     return fig
 
 def PlotlyLinda(df):    
@@ -408,8 +407,76 @@ def ReadAPIIngTL():
     TL_ING = TL_ING.rename(columns={'sum_ingresos':'ingresos'})
     return TL_ING    
 
+##INTERNET FIJO
+   ###ACCESOS
+@st.cache(allow_output_mutation=True)
+def ReadApiINTFAccesos():
+    resourceid = '540ea080-bf16-4d63-911f-3b4814e8e4f1'
+    INTF_ACCESOS = pd.DataFrame()
+    consulta_anno=['2017','2018','2019','2020','2021','2022']
+    for anno in consulta_anno:
+        consulta='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid + ''\
+             '&filters[anno]=' + anno + ''\
+             '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa&fields[]=id_departamento&fields[]=departamento&fields[]=id_municipio&fields[]=municipio'\
+             '&group_by=anno,trimestre,id_empresa,empresa,id_departamento,departamento,id_municipio,municipio'\
+             '&sum=accesos' 
+        response_base = urlopen(consulta + '&limit=10000000') 
+        json_base = json.loads(response_base.read())
+        ACCESOS = pd.DataFrame(json_base['result']['records'])
+        INTF_ACCESOS = INTF_ACCESOS.append(ACCESOS)
+    INTF_ACCESOS.sum_accesos = INTF_ACCESOS.sum_accesos.astype('int64')
+    INTF_ACCESOS = INTF_ACCESOS.rename(columns={'sum_accesos':'accesos'})
+    return INTF_ACCESOS 
+    
+   ###INGRESOS 
+@st.cache(allow_output_mutation=True)   
+def ReadApiINTFIng():
+    resourceid = 'd917a68d-9cb9-4257-82f1-74115a4cf629'
+    consulta='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid + ''\
+             '&filters[anno]=' + consulta_anno + ''\
+             '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+             '&group_by=anno,trimestre,id_empresa,empresa'\
+             '&sum=ingresos' 
+    response_base = urlopen(consulta + '&limit=10000000') 
+    json_base = json.loads(response_base.read())
+    INTF_ING = pd.DataFrame(json_base['result']['records'])
+    INTF_ING.sum_ingresos = INTF_ING.sum_ingresos.astype('int64')
+    INTF_ING = INTF_ING.rename(columns={'sum_ingresos':'ingresos'})
+    return INTF_ING
 
-
+##TV POR SUSCRIPCIÓN
+   ###INGRESOS
+@st.cache(allow_output_mutation=True)      
+def ReadApiTVSUSIng():
+    resourceid = '1033b0f2-8107-4e04-ae33-8b12882b762d'
+    consulta='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid + ''\
+             '&filters[anno]=' + consulta_anno + ''\
+             '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+             '&group_by=anno,trimestre,id_empresa,empresa'\
+             '&sum=ingresos' 
+    response_base = urlopen(consulta + '&limit=10000000') 
+    json_base = json.loads(response_base.read())
+    TVSUS_ING = pd.DataFrame(json_base['result']['records'])
+    TVSUS_ING.sum_ingresos = TVSUS_ING.sum_ingresos.astype('int64')
+    TVSUS_ING = TVSUS_ING.rename(columns={'sum_ingresos':'ingresos'})
+    return TVSUS_ING
+   ###SUSCRIPTORES
+@st.cache(allow_output_mutation=True)    
+def ReadApiTVSUSSus():
+    resourceid = '0c4b69a7-734d-432c-9d9b-9dc600d50391'
+    consulta='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid + ''\
+             '&filters[mes]=3,6,9,12&filters[anno]=' + consulta_anno + ''\
+             '&fields[]=anno&fields[]=mes&fields[]=id_operador&fields[]=nombre_operador&fields[]=id_departamento&fields[]=departamento&fields[]=id_municipio&fields[]=municipio'\
+             '&group_by=anno,mes,id_operador,nombre_operador,id_departamento,departamento,id_municipio,municipio'\
+             '&sum=suscriptores' 
+    response_base = urlopen(consulta + '&limit=10000000') 
+    json_base = json.loads(response_base.read())
+    TV_SUS = pd.DataFrame(json_base['result']['records'])
+    TV_SUS.sum_suscriptores = TV_SUS.sum_suscriptores.astype('int64')
+    TV_SUS = TV_SUS.rename(columns={'id_operador':'id_empresa','nombre_operador':'empresa','sum_suscriptores':'suscriptores'})
+    return TV_SUS   
+        
+    
 if select_mercado == 'Telefonía local':   
     st.title('Telefonía local') 
     Trafico=ReadAPITrafTL()
@@ -635,9 +702,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 dflistTraf2.append(Linda(Trafnac,'trafico',elem))
                 dflistIng2.append(Linda(Ingnac,'ingresos',elem))
                 dflistLin2.append(Linda(Linnac,'lineas',elem))
-            LindTraf=pd.concat(dflistTraf2).reset_index().drop('index',axis=1).fillna(0)
-            LindIng=pd.concat(dflistIng2).reset_index().drop('index',axis=1).dropna(axis=1) 
-            LindLin=pd.concat(dflistLin2).reset_index().drop('index',axis=1).dropna(axis=1)     
+            LindTraf=pd.concat(dflistTraf2).reset_index().drop('index',axis=1).fillna(np.nan)
+            LindIng=pd.concat(dflistIng2).reset_index().drop('index',axis=1).fillna(np.nan) 
+            LindLin=pd.concat(dflistLin2).reset_index().drop('index',axis=1).fillna(np.nan)     
 
 
             if select_variable == "Tráfico":
@@ -1348,11 +1415,390 @@ $$i = 1, 2, ..., n$$
                 with col2:       
                     st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)
                     st.plotly_chart(fig10,use_container_width=True)                
- 
-            
 
+
+             
 if select_mercado == "Internet fijo":
-    st.write("# Internet fijo")
+    st.title('Internet fijo') 
+    AccesosInt=ReadApiINTFAccesos()
+    IngresosInt=ReadApiINTFIng()
+    AccesosInt['periodo']=AccesosInt['anno']+'-T'+AccesosInt['trimestre']
+    IngresosInt['periodo']=IngresosInt['anno']+'-T'+IngresosInt['trimestre']
+
+    AccnacInt=AccesosInt.groupby(['periodo','empresa'])['accesos'].sum().reset_index()
+    IngnacInt=IngresosInt.groupby(['periodo','empresa'])['ingresos'].sum().reset_index()
+    PERIODOS=AccnacInt['periodo'].unique().tolist()
     
+    AccdptoInt=AccesosInt.groupby(['periodo','id_departamento','departamento','empresa'])['accesos'].sum().reset_index()
+    AccdptoInt=AccdptoInt[AccdptoInt['accesos']>0]   
+ 
+    AccmuniInt=AccesosInt.groupby(['periodo','id_municipio','municipio','departamento','empresa'])['accesos'].sum().reset_index()
+    AccmuniInt=AccmuniInt[AccmuniInt['accesos']>0]
+    AccmuniInt.insert(1,'codigo',AccmuniInt['municipio']+' - '+AccmuniInt['id_municipio'])
+    AccmuniInt=AccmuniInt.drop(['id_municipio','municipio'],axis=1)
+    
+    dfAccesos=[];dfIngresos=[];
+    dfAccesos2=[];dfIngresos2=[];
+    dfAccesos3=[];dfIngresos3=[];
+
+    select_dimension=st.sidebar.selectbox('Ámbito',['Departamental','Municipal','Nacional'])
+    
+    if select_dimension == 'Nacional':
+        select_indicador = st.sidebar.selectbox('Indicador',
+                                    ['Stenbacka', 'Concentración','IHH','Linda'])
+    ## Información sobre los indicadores
+        if select_indicador == 'Stenbacka':
+            st.write("### Índice de Stenbacka")
+            st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
+            #st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+            with st.expander("Información adicional índice de Stenbacka"):
+                st.write(r""" El índice de Stenbacka está dado por la siguiente ecuación""")
+                st.latex(r"""S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]""")
+                st.write(r"""
+**Donde**
+-   $S^{2}_{1}$ y $S^{2}_{2}$ Corresponden a las participaciones de mercado de las dos empresas más grandes, respectivamente.
+-   $\gamma$ es un parámetro de competencia que puede incluir aspectos como: existencia de compradores con poder de mercado, regulación económica, presencia de derechos de propiedad, barreras a la entrada, entre otros (Lis-Guitiérrez, 2013).                
+                """,unsafe_allow_html=True)
+        if select_indicador == 'Concentración':
+            st.write("### Razón de concentración")
+            st.markdown("La razón de concentración es un índice que mide las participaciones acumuladas de las empresas lideres en el mercado. Toma valores entre 0 y 1.")            
+            with st.expander("Información adicional razón de concentración"):
+                st.write("La concentración se calcula de la siguiente forma:")
+                st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
+                st.write(r""" **Donde**:
+-   $S_{i}$ es la participación de mercado de la i-ésima empresa.
+-   $n$ es el número total de empresas consideradas.
+
+De acuerdo con Stazhkova, Kotcofana & Protasov (2017), para un $n = 3$ se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concetración | Rango         |
+|--------------|---------------|
+| Baja         | $<0,45$       |
+| Moderada     | $0,45 - 0,70$ |
+| Alta         | $>0,70$       |
+                
+                
+""")
+        if select_indicador == 'IHH':
+            st.write("### Índice de Herfindahl-Hirschman")
+            st.markdown("El IHH es el índice más aceptado como medida de concentración de la oferta en un mercado. Su cálculo se expresa como la suma de los cuadrados de las participaciones de las empresas que componen el mercado. El índice máximo se obtiene para un monopolio y corresponde a 10000.")            
+            with st.expander("Información adicional IHH"):
+                st.write("La fórmula del IHH está dada como")
+                st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
+                st.write(r"""**Donde:**
+-   $S_{i}$ es la participación de mercado de la variable analizada.
+-   $n$ es el número de empresas más grandes consideradas.
+
+De acuerdo con el Departamento de Justicia y la Comisión Federal de Comercio de Estados Unidos (2010), se puede categorizar a un mercado de acuerdo a los siguientes rangos de este índice:
+
+| Mercado                   | Rango          |
+|---------------------------|----------------|
+| Muy competitivo           | $<100$         |
+| Desconcentrado            | $100 - 1500$   |
+| Moderadamente concentrado | $>1500 - 2500$ |
+| Altamente concentrado     | $>2500$        |                
+                """)
+        if select_indicador == 'Linda':
+            st.write("### Índice de Linda")               
+            st.markdown("Este índice es utilizado para medir la desigualdad entre diferentes cuotas de mercado e identificar posibles oligopolios. El índice tomará valores cercanos a 1 en la medida que la participación en el mercado del grupo de empresas grandes es mayor que la participación del grupo de empresas pequeñas.")                    
+            with st.expander("Información adicional indicador de linda"): 
+                st.write("El indicador de Linda está dado por la siguiente ecuación:")
+                st.latex(r'''L = \frac{1}{N(N-1)} \sum_{i=1}^{N-1} (\frac{\overline{X}_{i}}{\overline{X}_{N-i}})''')
+                st.write(r"""**Donde**:
+- $\overline{X}_{i}$ es la participación de mercado media de las primeras i-ésimas empresas.
+- $\overline{X}_{N-i}$ es la partipación de mercado media de las i-ésimas empresas restantes.
+
+De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concentración   | Rango         |
+|-----------------|---------------|
+| Baja            | $<0,20$       |
+| Moderada        | $0,20 - 0,50$ |
+| Concentrada     | $>0,50 - 1$   |
+| Alta            | $>1$          |""",unsafe_allow_html=True)        
+    
+        st.write('#### Agregación nacional') 
+        select_variable = st.selectbox('Variable',['Accesos','Ingresos']) 
+
+        if select_indicador == 'Stenbacka':
+            gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
+            for elem in PERIODOS:
+                prAcc=AccnacInt[AccnacInt['periodo']==elem]
+                prAcc.insert(3,'participacion',Participacion(prAcc,'accesos'))
+                prAcc.insert(4,'stenbacka',Stenbacka(prAcc,'accesos',gamma))
+                dfAccesos.append(prAcc.sort_values(by='participacion',ascending=False))
+        
+                prIn=IngnacInt[IngnacInt['periodo']==elem]
+                prIn.insert(3,'participacion',Participacion(prIn,'ingresos'))
+                prIn.insert(4,'stenbacka',Stenbacka(prIn,'ingresos',gamma))
+                dfIngresos.append(prIn.sort_values(by='participacion',ascending=False))
+        
+            AccgroupPart=pd.concat(dfAccesos)
+            AccgroupPart.participacion=AccgroupPart.participacion.round(4)
+            AccgroupPart=AccgroupPart[AccgroupPart['participacion']>0]
+            InggroupPart=pd.concat(dfIngresos)
+            InggroupPart.participacion=InggroupPart.participacion.round(4)
+            InggroupPart=InggroupPart[InggroupPart['participacion']>0]
+
+            fig1=PlotlyStenbacka(AccgroupPart)
+            fig2=PlotlyStenbacka(InggroupPart)          
+            
+            if select_variable == "Accesos":
+                AgGrid(AccgroupPart)
+                st.plotly_chart(fig1, use_container_width=True)
+            if select_variable == "Ingresos":
+                AgGrid(InggroupPart)
+                st.plotly_chart(fig2, use_container_width=True)
+
+        if select_indicador == 'Concentración':
+            dflistAcc=[];dflistIng=[]
+            
+            for elem in PERIODOS:
+                dflistAcc.append(Concentracion(AccnacInt,'accesos',elem))
+                dflistIng.append(Concentracion(IngnacInt,'ingresos',elem))
+            ConcAcc=pd.concat(dflistAcc).fillna(1.0)
+            ConcIng=pd.concat(dflistIng).fillna(1.0)
+     
+                        
+            if select_variable == "Accesos":
+                colsconAcc=ConcAcc.columns.values.tolist()
+                conc=st.slider('Seleccionar el número de empresas',1,len(colsconAcc)-1,3,1)
+                fig4=PlotlyConcentracion(ConcAcc)
+                st.write(ConcAcc.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAcc[conc]]))
+                st.plotly_chart(fig4,use_container_width=True)
+            if select_variable == "Ingresos":
+                colsconIng=ConcIng.columns.values.tolist()
+                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,3,1)
+                fig5=PlotlyConcentracion(ConcIng)
+                st.write(ConcIng.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconIng[conc]]))
+                st.plotly_chart(fig5,use_container_width=True)
+
+        if select_indicador == 'IHH':
+            PERIODOS=AccnacInt['periodo'].unique().tolist()
+            for elem in PERIODOS:
+                prAcc=AccnacInt[AccnacInt['periodo']==elem]
+                prAcc.insert(3,'participacion',(prAcc['accesos']/prAcc['accesos'].sum())*100)
+                prAcc.insert(4,'IHH',IHH(prAcc,'accesos'))
+                dfAccesos3.append(prAcc.sort_values(by='participacion',ascending=False))
+                ##
+                prIn=IngnacInt[IngnacInt['periodo']==elem]
+                prIn.insert(3,'participacion',(prIn['ingresos']/prIn['ingresos'].sum())*100)
+                prIn.insert(4,'IHH',IHH(prIn,'ingresos'))
+                dfIngresos3.append(prIn.sort_values(by='participacion',ascending=False))
+                ##
+
+            AccgroupPart3=pd.concat(dfAccesos3)
+            InggroupPart3=pd.concat(dfIngresos3)
+            
+            IHHTraf=AccgroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
+            IHHIng=InggroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
+            
+            ##Gráficas
+            
+            fig7 = PlotlyIHH(IHHTraf)   
+            fig8 = PlotlyIHH(IHHIng)  
+            
+            if select_variable == "Accesos":
+                AgGrid(AccgroupPart3)
+                st.plotly_chart(fig7,use_container_width=True)
+            if select_variable == "Ingresos":
+                AgGrid(InggroupPart3)
+                st.plotly_chart(fig8,use_container_width=True)
+
+        if select_indicador == 'Linda':
+            dflistAcc2=[];dflistIng2=[]
+            
+            for elem in PERIODOS:
+                dflistAcc2.append(Linda(AccnacInt,'accesos',elem))
+                dflistIng2.append(Linda(IngnacInt,'ingresos',elem))
+            LindAcc=pd.concat(dflistAcc2).reset_index().drop('index',axis=1).fillna(np.nan)
+            LindIng=pd.concat(dflistIng2).reset_index().drop('index',axis=1).fillna(np.nan) 
+ 
+
+
+            if select_variable == "Accesos":
+                LindconAcc=LindAcc.columns.values.tolist()
+                lind=st.slider('Seleccionar nivel',2,len(LindconAcc),2,1)
+                fig10=PlotlyLinda(LindAcc)
+                st.write(LindAcc.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAcc[lind-1]]))
+                st.plotly_chart(fig10,use_container_width=True)
+            if select_variable == "Ingresos":
+                LindconIng=LindIng.columns.values.tolist()            
+                lind=st.slider('Seleccionar nivel',2,len(LindconIng),2,1)
+                fig11=PlotlyLinda(LindIng)
+                st.write(LindIng.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconIng[lind-1]]))
+                st.plotly_chart(fig11,use_container_width=True)
+  
+    if select_dimension == 'Municipal':
+        select_indicador = st.sidebar.selectbox('Indicador',
+                                    ['Stenbacka', 'Concentración','IHH','Linda'])
+    ## Información sobre los indicadores                                
+        if select_indicador == 'Stenbacka':
+            st.write("### Índice de Stenbacka")
+            st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
+            #st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+            with st.expander("Información adicional índice de Stenbacka"):
+                st.write(r""" El índice de Stenbacka está dado por la siguiente ecuación""")
+                st.latex(r"""S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]""")
+                st.write(r"""
+**Donde**
+-   $S^{2}_{1}$ y $S^{2}_{2}$ Corresponden a las participaciones de mercado de las dos empresas más grandes, respectivamente.
+-   $\gamma$ es un parámetro de competencia que puede incluir aspectos como: existencia de compradores con poder de mercado, regulación económica, presencia de derechos de propiedad, barreras a la entrada, entre otros (Lis-Guitiérrez, 2013).                
+                """,unsafe_allow_html=True)
+        if select_indicador == 'Concentración':
+            st.write("### Razón de concentración")
+            st.markdown("La razón de concentración es un índice que mide las participaciones acumuladas de las empresas lideres en el mercado. Toma valores entre 0 y 1.")            
+            with st.expander("Información adicional razón de concentración"):
+                st.write("La concentración se calcula de la siguiente forma:")
+                st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
+                st.write(r""" **Donde**:
+-   $S_{i}$ es la participación de mercado de la i-ésima empresa.
+-   $n$ es el número total de empresas consideradas.
+
+De acuerdo con Stazhkova, Kotcofana & Protasov (2017), para un $n = 3$ se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concetración | Rango         |
+|--------------|---------------|
+| Baja         | $<0,45$       |
+| Moderada     | $0,45 - 0,70$ |
+| Alta         | $>0,70$       |
+                
+                
+""")
+        if select_indicador == 'IHH':
+            st.write("### Índice de Herfindahl-Hirschman")
+            st.markdown("El IHH es el índice más aceptado como medida de concentración de la oferta en un mercado. Su cálculo se expresa como la suma de los cuadrados de las participaciones de las empresas que componen el mercado. El índice máximo se obtiene para un monopolio y corresponde a 10000.")            
+            with st.expander("Información adicional IHH"):
+                st.write("La fórmula del IHH está dada como")
+                st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
+                st.write(r"""**Donde:**
+-   $S_{i}$ es la participación de mercado de la variable analizada.
+-   $n$ es el número de empresas más grandes consideradas.
+
+De acuerdo con el Departamento de Justicia y la Comisión Federal de Comercio de Estados Unidos (2010), se puede categorizar a un mercado de acuerdo a los siguientes rangos de este índice:
+
+| Mercado                   | Rango          |
+|---------------------------|----------------|
+| Muy competitivo           | $<100$         |
+| Desconcentrado            | $100 - 1500$   |
+| Moderadamente concentrado | $>1500 - 2500$ |
+| Altamente concentrado     | $>2500$        |                
+                """)
+        if select_indicador == 'Linda':
+            st.write("### Índice de Linda")               
+            st.markdown("Este índice es utilizado para medir la desigualdad entre diferentes cuotas de mercado e identificar posibles oligopolios. El índice tomará valores cercanos a 1 en la medida que la participación en el mercado del grupo de empresas grandes es mayor que la participación del grupo de empresas pequeñas.")                    
+            with st.expander("Información adicional indicador de linda"): 
+                st.write("El indicador de Linda está dado por la siguiente ecuación:")
+                st.latex(r'''L = \frac{1}{N(N-1)} \sum_{i=1}^{N-1} (\frac{\overline{X}_{i}}{\overline{X}_{N-i}})''')
+                st.write(r"""**Donde**:
+- $\overline{X}_{i}$ es la participación de mercado media de las primeras i-ésimas empresas.
+- $\overline{X}_{N-i}$ es la partipación de mercado media de las i-ésimas empresas restantes.
+
+De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concentración   | Rango         |
+|-----------------|---------------|
+| Baja            | $<0,20$       |
+| Moderada        | $0,20 - 0,50$ |
+| Concentrada     | $>0,50 - 1$   |
+| Alta            | $>1$          |""",unsafe_allow_html=True) 
+
+        st.write('#### Desagregación municipal')
+        col1, col2 = st.columns(2)
+        with col1:        
+            select_variable = st.selectbox('Variable',['Accesos'])  
+        MUNICIPIOS=sorted(AccmuniInt.codigo.unique().tolist())
+        with col2:
+            MUNI=st.selectbox('Escoja el municipio', MUNICIPIOS)
+        PERIODOSACC=AccmuniInt[AccmuniInt['codigo']==MUNI]['periodo'].unique().tolist()
+        
+    ## Cálculo de los indicadores 
+    
+        if select_indicador == 'Stenbacka':                        
+            gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
+            
+            for periodo in PERIODOSACC:
+                prAcc=AccmuniInt[(AccmuniInt['codigo']==MUNI)&(AccmuniInt['periodo']==periodo)]
+                prAcc.insert(5,'participacion',Participacion(prAcc,'accesos'))
+                prAcc.insert(6,'stenbacka',Stenbacka(prAcc,'accesos',gamma))
+                dfAccesos.append(prAcc.sort_values(by='participacion',ascending=False))
+            AccgroupPart=pd.concat(dfAccesos)
+
+            ##Graficas 
+            
+            fig1=PlotlyStenbacka(AccgroupPart)
+                  
+            if select_variable == "Accesos":
+                AgGrid(AccgroupPart)
+                st.plotly_chart(fig1,use_container_width=True)
+
+        if select_indicador == 'Concentración':
+            dflistAcc=[]
+            
+            for periodo in PERIODOSACC:
+                prAcc=AccmuniInt[(AccmuniInt['codigo']==MUNI)&(AccmuniInt['periodo']==periodo)]
+                dflistAcc.append(Concentracion(prAcc,'accesos',periodo))
+            ConcAcc=pd.concat(dflistAcc).fillna(1.0).reset_index().drop('index',axis=1)
+                        
+            if select_variable == "Accesos":
+                colsconAcc=ConcAcc.columns.values.tolist()
+                value1= len(colsconAcc)-1 if len(colsconAcc)-1 >1 else 2
+                conc=st.slider('Seleccione el número de empresas',1,value1,3,1)
+                fig3 = PlotlyConcentracion(ConcAcc) 
+                st.write(ConcAcc.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAcc[conc]]))
+                st.plotly_chart(fig3,use_container_width=True)   
+
+        if select_indicador == 'IHH':            
+            for periodo in PERIODOSACC:
+                prAc=AccmuniInt[(AccmuniInt['codigo']==MUNI)&(AccmuniInt['periodo']==periodo)]
+                prAc.insert(3,'participacion',(prAc['accesos']/prAc['accesos'].sum())*100)
+                prAc.insert(4,'IHH',IHH(prAc,'accesos'))
+                dfAccesos3.append(prAc.sort_values(by='participacion',ascending=False))
+
+            AccgroupPart3=pd.concat(dfAccesos3)
+            IHHAcc=AccgroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()  
+            
+            fig5=PlotlyIHH(IHHAcc)
+
+            if select_variable == "Accesos":
+                AgGrid(AccgroupPart3)
+                st.plotly_chart(fig5,use_container_width=True)
+
+        if select_indicador == 'Linda':
+            dflistAcc2=[];datosAcc=[];nempresaAcc=[];                
+            for periodo in PERIODOSACC:
+                prAc=AccmuniInt[(AccmuniInt['codigo']==MUNI)&(AccmuniInt['periodo']==periodo)]
+                nempresaAcc.append(prAc.empresa.nunique())
+                dflistAcc2.append(Linda(prAc,'accesos',periodo))
+                datosAcc.append(prAc)    
+            NemphisAcc=max(nempresaAcc)  
+            dAcc=pd.concat(datosAcc).reset_index().drop('index',axis=1)
+            LindAcc=pd.concat(dflistAcc2).reset_index().drop('index',axis=1).fillna(np.nan)
+                           
+            if select_variable == "Accesos":
+                LindconAcc=LindAcc.columns.values.tolist()
+                if NemphisAcc==1:
+                    st.write("El índice de linda no está definido para éste municipio pues cuenta con una sola empresa")
+                    st.write(dAcc)
+                elif  NemphisAcc==2:
+                    col1, col2 = st.columns([3, 1])
+                    fig10=PlotlyLinda2(LindAcc)
+                    col1.write("**Datos completos**")                    
+                    col1.write(dAcc)  
+                    col2.write("**Índice de Linda**")
+                    col2.write(LindAcc)
+                    st.plotly_chart(fig10,use_container_width=True)        
+                else:    
+                    lind=st.slider('Seleccionar nivel',2,len(LindconAcc),2,1)
+                    fig10=PlotlyLinda(LindAcc)
+                    st.write(LindAcc.fillna(np.nan).reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAcc[lind-1]]))
+                    with st.expander("Mostrar datos"):
+                        AgGrid(dAcc)                    
+                    st.plotly_chart(fig10,use_container_width=True) 
+                    
+                    
 if select_mercado == "Televisión por suscripción":
-    st.write("# Televisión por suscripción")    
+    st.title("Televisión por suscripción") 
+    IngresosTV=ReadApiTVSUSIng()   
+    SuscriptoresTV=ReadApiTVSUSSus()
+    st.write(SuscriptoresTV)    
