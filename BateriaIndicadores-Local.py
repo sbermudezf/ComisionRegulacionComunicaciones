@@ -474,7 +474,7 @@ def ReadApiTVSUSSus():
     TV_SUS = pd.DataFrame(json_base['result']['records'])
     TV_SUS.sum_suscriptores = TV_SUS.sum_suscriptores.astype('int64')
     TV_SUS = TV_SUS.rename(columns={'id_operador':'id_empresa','nombre_operador':'empresa','sum_suscriptores':'suscriptores'})
-    return TV_SUS   
+    return TV_SUS  
         
     
 if select_mercado == 'Telefonía local':   
@@ -616,13 +616,13 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             ##           
             
             if select_variable == "Tráfico":
-                st.write(TrafgroupPart)
+                AgGrid(TrafgroupPart)
                 st.plotly_chart(fig1, use_container_width=True)
             if select_variable == "Ingresos":
-                st.write(InggroupPart)
+                AgGrid(InggroupPart)
                 st.plotly_chart(fig2, use_container_width=True)
             if select_variable == "Líneas":
-                st.write(LingroupPart)
+                AgGrid(LingroupPart)
                 st.plotly_chart(fig3, use_container_width=True)
 
         if select_indicador == 'Concentración':
@@ -638,19 +638,19 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                         
             if select_variable == "Tráfico":
                 colsconTraf=ConcTraf.columns.values.tolist()
-                conc=st.slider('Seleccionar el número de empresas',1,len(colsconTraf)-1,1,1)
+                conc=st.slider('Seleccionar el número de empresas',1,len(colsconTraf)-1,3,1)
                 fig4=PlotlyConcentracion(ConcTraf)
                 st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)
             if select_variable == "Ingresos":
                 colsconIng=ConcIng.columns.values.tolist()
-                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,1,1)
+                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,3,1)
                 fig5=PlotlyConcentracion(ConcIng)
                 st.write(ConcIng.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconIng[conc]]))
                 st.plotly_chart(fig5,use_container_width=True)
             if select_variable == "Líneas":
                 colsconLin=ConcLin.columns.values.tolist()
-                conc=st.slider('Seleccione el número de empresas',1,len(colsconLin)-1,1,1)
+                conc=st.slider('Seleccione el número de empresas',1,len(colsconLin)-1,3,1)
                 fig6=PlotlyConcentracion(ConcLin)
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig6,use_container_width=True)
@@ -686,13 +686,13 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             fig9 = PlotlyIHH(IHHLin)  
             
             if select_variable == "Tráfico":
-                st.write(TrafgroupPart3)
+                AgGrid(TrafgroupPart3)
                 st.plotly_chart(fig7,use_container_width=True)
             if select_variable == "Ingresos":
-                st.write(InggroupPart3)
+                AgGrid(InggroupPart3)
                 st.plotly_chart(fig8,use_container_width=True)
             if select_variable == "Líneas":
-                st.write(LingroupPart3)
+                AgGrid(LingroupPart3)
                 st.plotly_chart(fig9,use_container_width=True)
                 
         if select_indicador == 'Linda':
@@ -838,10 +838,10 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             fig2=PlotlyStenbacka(LingroupPart)
                   
             if select_variable == "Tráfico":
-                st.write(TrafgroupPart)
+                AgGrid(TrafgroupPart)
                 st.plotly_chart(fig1,use_container_width=True)
             if select_variable == "Líneas":
-                st.write(LingroupPart)
+                AgGrid(LingroupPart)
                 st.plotly_chart(fig2,use_container_width=True)
    
         if select_indicador == 'Concentración':
@@ -859,14 +859,14 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             if select_variable == "Tráfico":
                 colsconTraf=ConcTraf.columns.values.tolist()
                 value1= len(colsconTraf)-1 if len(colsconTraf)-1 >1 else 2
-                conc=st.slider('Seleccione el número de empresas',1,value1,1,1)
+                conc=st.slider('Seleccione el número de empresas',1,value1,3,1)
                 fig3 = PlotlyConcentracion(ConcTraf) 
                 st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
                 st.plotly_chart(fig3,use_container_width=True)   
             if select_variable == "Líneas":
                 colsconLin=ConcLin.columns.values.tolist()
                 value2= len(colsconLin)-1 if len(colsconLin)-1 >1 else 2
-                conc=st.slider('Seleccione el número de empresas',1,value2,1,1)
+                conc=st.slider('Seleccione el número de empresas',1,value2,3,1)
                 fig4 = PlotlyConcentracion(ConcLin)
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)   
@@ -918,7 +918,7 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 LindconTraf=LindTraf.columns.values.tolist()
                 if NemphisTraf==1:
                     st.write("El índice de linda no está definido para éste municipio pues cuenta con una sola empresa")
-                    st.write(dTraf)
+                    AgGrid(dTraf)
                 elif  NemphisTraf==2:
                     col1, col2 = st.columns([3, 1])
                     fig10=PlotlyLinda2(LindTraf)
@@ -944,9 +944,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                     col1, col2 = st.columns([3, 1])
                     fig11=PlotlyLinda2(LindLin)
                     col1.write("**Datos completos**")
-                    col1.write(dLin)
+                    col1.AgGrid(dLin)
                     col2.write("**Índice de Linda**")    
-                    col2.write(LindLin)
+                    col2.AgGrid(LindLin)
                     st.plotly_chart(fig11,use_container_width=True)        
                 else:
                     lind=st.slider('Seleccionar nivel',2,len(LindconLin),2,1)
@@ -955,8 +955,7 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                     with st.expander("Mostrar datos"):
                         st.write(dLin)
                     st.plotly_chart(fig11,use_container_width=True)
-                
-               
+                              
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
                                     ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
@@ -1129,10 +1128,10 @@ $$i = 1, 2, ..., n$$
             fig2=PlotlyStenbacka(LingroupPart)
             
             if select_variable == "Tráfico":
-                st.write(TrafgroupPart)
+                AgGrid(TrafgroupPart)
                 st.plotly_chart(fig1,use_container_width=True)
             if select_variable == "Líneas":
-                st.write(LingroupPart)
+                AgGrid(LingroupPart)
                 st.plotly_chart(fig2,use_container_width=True)     
         
         if select_indicador =='Concentración':
@@ -1150,14 +1149,14 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Tráfico":
                 colsconTraf=ConcTraf.columns.values.tolist()
                 value1= len(colsconTraf)-1 if len(colsconTraf)-1 >1 else 2 
-                conc=st.slider('Seleccionar número de expresas ',1,value1,1,1)
+                conc=st.slider('Seleccionar número de expresas ',1,value1,3,1)
                 fig3 = PlotlyConcentracion(ConcTraf) 
                 st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
                 st.plotly_chart(fig3,use_container_width=True)   
             if select_variable == "Líneas":
                 colsconLin=ConcLin.columns.values.tolist()
                 value2= len(colsconLin)-1 if len(colsconLin)-1 >1 else 2 
-                conc=st.slider('Seleccionar número de expresas ',1,value2,1,1)
+                conc=st.slider('Seleccionar número de expresas ',1,value2,3,1)
                 fig4 = PlotlyConcentracion(ConcLin)
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)   
@@ -1182,10 +1181,10 @@ $$i = 1, 2, ..., n$$
             fig6=PlotlyIHH(IHHLin)
 
             if select_variable == "Tráfico":
-                st.write(TrafgroupPart3)
+                AgGrid(TrafgroupPart3)
                 st.plotly_chart(fig5,use_container_width=True)
             if select_variable == "Líneas":
-                st.write(LingroupPart3)
+                AgGrid(LingroupPart3)
                 st.plotly_chart(fig6,use_container_width=True)    
                 
         if select_indicador == 'Linda':
@@ -1210,7 +1209,7 @@ $$i = 1, 2, ..., n$$
                 LindconTraf=LindTraf.columns.values.tolist()
                 if NemphisTraf==1:
                     st.write("El índice de linda no está definido para éste departamento pues cuenta con una sola empresa")
-                    st.write(dTraf)
+                    AgGrid(dTraf)
                 elif  NemphisTraf==2:
                     col1, col2 = st.columns([3, 1])
                     fig10=PlotlyLinda2(LindTraf)
@@ -1258,7 +1257,6 @@ $$i = 1, 2, ..., n$$
                 prLi.insert(4,'media entropica',MediaEntropica(prLi,'lineas')[0])
                 dfLineas.append(prLi)
             TrafgroupPart=pd.concat(dfTrafico)
-            st.write(TrafgroupPart)
             MEDIAENTROPICATRAF=TrafgroupPart.groupby(['periodo'])['media entropica'].mean().reset_index()    
             LingroupPart=pd.concat(dfLineas)
             MEDIAENTROPICALIN=LingroupPart.groupby(['periodo'])['media entropica'].mean().reset_index()            
@@ -2121,6 +2119,7 @@ if select_mercado == "Televisión por suscripción":
     st.title("Televisión por suscripción") 
     IngresosTV=ReadApiTVSUSIng() 
     SuscriptoresTV=ReadApiTVSUSSus()
+    SuscriptoresTV.departamento.replace({'BOGOTÁ, D.C.':'BOGOTÁ D.C.','CAQUETA':'CAQUETÁ'},inplace=True)
     SuscriptoresTV['trimestre']=(SuscriptoresTV['mes'].astype('int64')-1)//3 +1  
     SuscriptoresTV['periodo']=SuscriptoresTV['anno']+'-T'+SuscriptoresTV['trimestre'].astype('str')
     IngresosTV['periodo']=IngresosTV['anno']+'-T'+IngresosTV['trimestre']
@@ -2134,8 +2133,8 @@ if select_mercado == "Televisión por suscripción":
  
     SusmuniTV=SuscriptoresTV.groupby(['periodo','id_municipio','municipio','departamento','empresa'])['suscriptores'].sum().reset_index()
     SusmuniTV=SusmuniTV[SusmuniTV['suscriptores']>0]
-#    SusmuniTV.insert(1,'codigo',SusmuniTV['municipio']+' - '+SusmuniTV['id_municipio'])
-    SusmuniTV.insert(1,'codigo',SusmuniTV['id_municipio'])
+    SusmuniTV.insert(1,'codigo',SusmuniTV['municipio']+' - '+SusmuniTV['id_municipio'])
+#    SusmuniTV.insert(1,'codigo',SusmuniTV['id_municipio'])
     SusmuniTV=SusmuniTV.drop(['id_municipio','municipio'],axis=1)
     
     dfSuscriptores=[];dfIngresos=[];
@@ -2637,7 +2636,7 @@ $$i = 1, 2, ..., n$$
         DEPARTAMENTOSSUS.remove('NA')
     
         with col2:
-            DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSSUS,5)
+            DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSSUS,5)   
         PERIODOSSUS=SusdptoTV[SusdptoTV['departamento']==DPTO]['periodo'].unique().tolist()
         
     ##Cálculo de los indicadores
@@ -2733,7 +2732,6 @@ $$i = 1, 2, ..., n$$
                 prSus.insert(4,'media entropica',MediaEntropica(prSus,'suscriptores')[0])
                 dfSuscriptores.append(prSus)
             SusgroupPart=pd.concat(dfSuscriptores)
-            st.write(SusgroupPart)
             MEDIAENTROPICASUS=SusgroupPart.groupby(['periodo'])['media entropica'].mean().reset_index()    
         
             #Graficas
@@ -2814,3 +2812,30 @@ $$i = 1, 2, ..., n$$
                 with col2:
                     st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)                
                     st.plotly_chart(fig9,use_container_width=True)
+
+
+
+
+
+st.write(r"""<hr>""", unsafe_allow_html=True)
+with st.expander('Referencias'):
+    st.write(r"""
+-   Herfindahl, O.C. (1950). Concentration in the U.S. Steel Industry. (Tesis de Doctoral no publicada). Columbia University, New York.
+
+-   Hirschman, A.O. (1945). National power and the structure of foreign trade. *University of California Press*. Berkeley.
+
+-   Linda, R. (1976). Methodology of concentration analysis applied to the study of industries and markets.
+
+-   Lis-Gutiérrez, J. (2013). Medidas de concentración y estabilidad de mercado. Una aplicación para Excel. Superintendencia de Industria y Comercio. Documentos de Trabajo, No. 12.
+
+-   Martinez, O.J. (2017). Concentración o desconcentración del mercado de telefonía móvil de Colombia: Una aproximación. *Revista de Economía del Caribe*, 20, 27-51.
+
+-   Melnik, A., Shy, O., & Stenbacka, R. (2008). Assessing market dominance. *Journal of Economic Behavior & Organization*, 68(1), 63-72. https://doi.org/10.1016/j.jebo.2008.03.010
+
+-   Miller, R. A. (1967). Marginal concentration ratios and industrial profit rates: Some empirical results. *Southern Economic Journal*, XXXIV, pp. 259-267.
+
+-   Stazhkova, P., Kotcofana, T., & Protasov, A. (2017). Concentration indices in analysis of competitive environment: case of Russian banking sector. *In CBU International Conference Proceedings*, 5, 458-464.
+
+-   Unión temporal Econometría - Quantil (2020). Propuesta de batería de indicadores para el análsis de competencia. Contrato CRC No. 109 de 2020.
+
+-   U.S. Department of Justice and The Federal Trade Commission (2010). Horizontal Merger Guidelines. Disponible en: https://www.justice.gov/atr/horizontal-merger-guidelines-08192010 """)
