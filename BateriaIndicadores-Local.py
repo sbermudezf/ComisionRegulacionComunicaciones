@@ -130,14 +130,14 @@ def Linda(df,column,periodo):
 ##
 ##Definición funciones para graficar los indicadores:
 def PlotlyStenbacka(df):
-    empresasdf=df['empresa'].unique().tolist()
+    empresasdf=df['id_empresa'].unique().tolist()
     fig = make_subplots(rows=1, cols=1)
     dfStenbacka=df.groupby(['periodo'])['stenbacka'].mean().reset_index()
     for elem in empresasdf:
-        fig.add_trace(go.Scatter(x=df[df['empresa']==elem]['periodo'],
-        y=df[df['empresa']==elem]['participacion'],
+        fig.add_trace(go.Scatter(x=df[df['id_empresa']==elem]['periodo'],
+        y=df[df['id_empresa']==elem]['participacion'],text=df[df['id_empresa']==elem]['empresa'],
         mode='lines+markers',line = dict(width=0.8),name='',hovertemplate =
-        '<br><b>Empresa</b>:<br>'+elem+
+        '<br><b>Empresa</b>:<br>'+'%{text}'+
         '<br><b>Periodo</b>: %{x}<br>'+                         
         '<br><b>Participación</b>: %{y:.4f}<br>')) 
     fig.add_trace(go.Scatter(x=dfStenbacka['periodo'],y=dfStenbacka['stenbacka'],name='',marker_color='rgba(128, 128, 128, 0.5)',fill='tozeroy',fillcolor='rgba(192, 192, 192, 0.15)',
@@ -356,7 +356,7 @@ st.markdown(r""" **<center><ins>Guía de uso de la batería de indicadores para 
 st.sidebar.markdown("""<b>Seleccione el indicador a calcular</b>""", unsafe_allow_html=True)
 
 select_mercado = st.sidebar.selectbox('Mercado',
-                                    ['Telefonía local', 'Internet fijo','Televisión por suscripción'])
+                                    ['Telefonía local','Telefonía móvil', 'Internet fijo','Internet móvil','Televisión por suscripción'])
                               
 #API 
 consulta_anno = '2017,2018,2019,2020,2021,2022,2023,2024,2025'
@@ -476,6 +476,175 @@ def ReadApiTVSUSSus():
     TV_SUS = TV_SUS.rename(columns={'id_operador':'id_empresa','nombre_operador':'empresa','sum_suscriptores':'suscriptores'})
     return TV_SUS  
         
+## TELEFONÍA MÓVIL
+    #TRÁFICO:
+@st.cache(allow_output_mutation=True)    
+def ReadApiVOZTraf():
+    resourceid = '1384a4d4-42d7-4930-b43c-bf9768c47ccb'
+    consulta='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid + ''\
+             '&filters[anno]=' + '2017,2018,2019,2020,2021,2022,2023,2024,2025' + ''\
+             '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+             '&group_by=anno,trimestre,id_empresa,empresa'\
+             '&sum=trafico' 
+    response_base = urlopen(consulta + '&limit=10000000') 
+    json_base = json.loads(response_base.read())
+    VOZ_TRAF = pd.DataFrame(json_base['result']['records'])
+    VOZ_TRAF.sum_trafico = VOZ_TRAF.sum_trafico.astype('int64')
+    VOZ_TRAF = VOZ_TRAF.rename(columns={'sum_trafico':'trafico'})
+    return VOZ_TRAF
+    #INGRESOS
+@st.cache(allow_output_mutation=True)    
+def ReadApiVOZIng():
+    consulta_anno:'2017,2018,2019,2020,2021,2022,2023,2024,2025'
+    resourceid = '43f0d3a9-cd5c-4f22-a996-74eae6cba9a3'
+    consulta='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid + ''\
+             '&filters[anno]=' + '2017,2018,2019,2020,2021,2022,2023,2024,2025' + ''\
+             '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+             '&group_by=anno,trimestre,id_empresa,empresa'\
+             '&sum=ingresos_totales' 
+    response_base = urlopen(consulta + '&limit=10000000') 
+    json_base = json.loads(response_base.read())
+    VOZ_ING = pd.DataFrame(json_base['result']['records'])
+    VOZ_ING.sum_ingresos_totales = VOZ_ING.sum_ingresos_totales.astype('int64')
+    VOZ_ING = VOZ_ING.rename(columns={'sum_ingresos_totales':'ingresos'})
+    return VOZ_ING
+    #ABONADOS
+@st.cache(allow_output_mutation=True)  
+def ReadApiVOZAbo():
+    resourceid = '3a9c0304-3795-4c55-a78e-079362373b4d'
+    consulta_anno:'2017,2018,2019,2020,2021,2022,2023,2024,2025'
+    consulta='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid + ''\
+             '&filters[anno]=' + '2017,2018,2019,2020,2021,2022,2023,2024,2025' + ''\
+             '&fields[]=anno&fields[]=trimestre&fields[]=id_proveedor&fields[]=proveedor'\
+             '&group_by=anno,trimestre,id_proveedor,proveedor'\
+             '&sum=abonados' 
+    response_base = urlopen(consulta + '&limit=10000000') 
+    json_base = json.loads(response_base.read())
+    VOZ_ABO = pd.DataFrame(json_base['result']['records'])
+    VOZ_ABO.sum_abonados = VOZ_ABO.sum_abonados.astype('int64')
+    VOZ_ABO = VOZ_ABO.rename(columns={'id_proveedor':'id_empresa','proveedor':'empresa','sum_abonados':'abonados'})
+    return VOZ_ABO
+
+## INTERNET MÓVIL
+    #TRAFICO 
+@st.cache(allow_output_mutation=True)      
+def ReadApiIMTraf():
+    resourceid_cf = 'd40c5e75-db56-4ec1-a441-0314c47bd71d'
+    consulta_cf='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid_cf + ''\
+                '&filters[anno]=' + consulta_anno + ''\
+                '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+                '&group_by=anno,trimestre,id_empresa,empresa'\
+                '&sum=trafico' 
+    response_base_cf = urlopen(consulta_cf + '&limit=10000000') 
+    json_base_cf = json.loads(response_base_cf.read())
+    IMCF_TRAF = pd.DataFrame(json_base_cf['result']['records'])
+    IMCF_TRAF.sum_trafico = IMCF_TRAF.sum_trafico.astype('int64')
+    resourceid_dda = 'c0be7034-29f8-4400-be54-c4aafe5df606'
+    consulta_dda='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid_dda + ''\
+                '&filters[anno]=' + consulta_anno + ''\
+                '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+                '&group_by=anno,trimestre,id_empresa,empresa'\
+                '&sum=trafico' 
+    response_base_dda = urlopen(consulta_dda + '&limit=10000000') 
+    json_base_dda = json.loads(response_base_dda.read())
+    IMDDA_TRAF = pd.DataFrame(json_base_dda['result']['records'])
+    IMDDA_TRAF.sum_trafico = IMDDA_TRAF.sum_trafico.astype('int64')
+    IM_TRAF=IMDDA_TRAF.merge(IMCF_TRAF, on=['anno','trimestre','id_empresa','empresa'])
+    IM_TRAF['trafico']=IM_TRAF['sum_trafico_y'].fillna(0)+IM_TRAF['sum_trafico_x']
+    IM_TRAF.drop(columns=['sum_trafico_y','sum_trafico_x'], inplace=True)
+    return IM_TRAF
+    #INGRESOS
+@st.cache(allow_output_mutation=True) 
+def ReadApiIMIng():
+    resourceid_cf = '8366e39c-6a14-483a-80f4-7278ceb39f88'
+    consulta_cf='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid_cf + ''\
+                '&filters[anno]=' + consulta_anno + ''\
+                '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+                '&group_by=anno,trimestre,id_empresa,empresa'\
+                '&sum=ingresos' 
+    response_base_cf = urlopen(consulta_cf + '&limit=10000000') 
+    json_base_cf = json.loads(response_base_cf.read())
+    IMCF_ING = pd.DataFrame(json_base_cf['result']['records'])
+    IMCF_ING.sum_ingresos = IMCF_ING.sum_ingresos.astype('int64')
+    resourceid_dda = '60a55889-ba71-45ff-b68f-33b503da36f2'
+    consulta_dda='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid_dda + ''\
+                '&filters[anno]=' + consulta_anno + ''\
+                '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+                '&group_by=anno,trimestre,id_empresa,empresa'\
+                '&sum=ingresos' 
+    response_base_dda = urlopen(consulta_dda + '&limit=10000000') 
+    json_base_dda = json.loads(response_base_dda.read())
+    IMDDA_ING = pd.DataFrame(json_base_dda['result']['records'])
+    IMDDA_ING.sum_ingresos = IMDDA_ING.sum_ingresos.astype('int64')
+    IM_ING=IMDDA_ING.merge(IMCF_ING, on=['anno','trimestre','id_empresa','empresa'])
+    IM_ING['ingresos']=IM_ING['sum_ingresos_y'].fillna(0)+IM_ING['sum_ingresos_x']
+    IM_ING.drop(columns=['sum_ingresos_y','sum_ingresos_x'], inplace=True)
+    return IM_ING
+    #ACCESOS
+@st.cache(allow_output_mutation=True) 
+def ReadApiIMAccesos():
+    resourceid_cf = '47d07e20-b257-4aaf-9309-1501c75a826c'
+    consulta_cf='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid_cf + ''\
+                '&filters[anno]=' + consulta_anno + ''\
+                '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+                '&group_by=anno,trimestre,id_empresa,empresa'\
+                '&sum=cantidad_suscriptores' 
+    response_base_cf = urlopen(consulta_cf + '&limit=10000000') 
+    json_base_cf = json.loads(response_base_cf.read())
+    IMCF_SUS = pd.DataFrame(json_base_cf['result']['records'])
+    IMCF_SUS.sum_cantidad_suscriptores = IMCF_SUS.sum_cantidad_suscriptores.astype('int64')
+    resourceid_dda = '3df620f6-deec-42a0-a6af-44ca23c2b73c'
+    consulta_dda='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid_dda + ''\
+                '&filters[anno]=' + consulta_anno + ''\
+                '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa'\
+                '&group_by=anno,trimestre,id_empresa,empresa'\
+                '&sum=cantidad_abonados' 
+    response_base_dda = urlopen(consulta_dda + '&limit=10000000') 
+    json_base_dda = json.loads(response_base_dda.read())
+    IMDDA_ABO = pd.DataFrame(json_base_dda['result']['records'])
+    IMDDA_ABO.sum_cantidad_abonados = IMDDA_ABO.sum_cantidad_abonados.astype('int64')
+    IM_ACCESOS=IMDDA_ABO.merge(IMCF_SUS, on=['anno','trimestre','id_empresa','empresa'])
+    IM_ACCESOS['accesos']=IM_ACCESOS['sum_cantidad_suscriptores'].fillna(0)+IM_ACCESOS['sum_cantidad_abonados']
+    IM_ACCESOS.drop(columns=['sum_cantidad_suscriptores','sum_cantidad_abonados'], inplace=True)
+    return IM_ACCESOS
+    
+@st.cache(allow_output_mutation=True) 
+def ReadApiINTFAccesosCorp():
+    consulta_anno='2017','2018','2019','2020','2021','2022','2023','2024','2025'
+    resourceid = '540ea080-bf16-4d63-911f-3b4814e8e4f1'
+    INTF_ACCESOS = pd.DataFrame()
+    for anno in consulta_anno:
+        consulta='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid + ''\
+                 '&filters[id_segmento]=107,108&filters[anno]=' + anno + ''\
+                 '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa&fields[]=id_departamento&fields[]=departamento&fields[]=id_municipio&fields[]=municipio'\
+                 '&group_by=anno,trimestre,id_empresa,empresa,id_departamento,departamento,id_municipio,municipio'\
+                 '&sum=accesos' 
+        response_base = urlopen(consulta + '&limit=10000000') 
+        json_base = json.loads(response_base.read())
+        ACCESOS = pd.DataFrame(json_base['result']['records'])
+        INTF_ACCESOS = INTF_ACCESOS.append(ACCESOS)
+    INTF_ACCESOS.sum_accesos = INTF_ACCESOS.sum_accesos.astype('int64')
+    INTF_ACCESOS = INTF_ACCESOS.rename(columns={'sum_accesos':'accesos'})
+    return INTF_ACCESOS
+@st.cache(allow_output_mutation=True)
+def ReadApiINTFAccesosRes():
+    consulta_anno='2017','2018','2019','2020','2021','2022','2023','2024','2025'
+    resourceid = '540ea080-bf16-4d63-911f-3b4814e8e4f1'
+    INTF_ACCESOS = pd.DataFrame()
+    for anno in consulta_anno:
+        consulta='https://www.postdata.gov.co/api/action/datastore/search.json?resource_id=' + resourceid + ''\
+                 '&filters[id_segmento]=101,102,103,104,105,106&filters[anno]=' + anno + ''\
+                 '&fields[]=anno&fields[]=trimestre&fields[]=id_empresa&fields[]=empresa&fields[]=id_departamento&fields[]=departamento&fields[]=id_municipio&fields[]=municipio'\
+                 '&group_by=anno,trimestre,id_empresa,empresa,id_departamento,departamento,id_municipio,municipio'\
+                 '&sum=accesos' 
+        response_base = urlopen(consulta + '&limit=10000000') 
+        json_base = json.loads(response_base.read())
+        ACCESOS = pd.DataFrame(json_base['result']['records'])
+        INTF_ACCESOS = INTF_ACCESOS.append(ACCESOS)
+    INTF_ACCESOS.sum_accesos = INTF_ACCESOS.sum_accesos.astype('int64')
+    INTF_ACCESOS = INTF_ACCESOS.rename(columns={'sum_accesos':'accesos'})
+    return INTF_ACCESOS
+    
     
 if select_mercado == 'Telefonía local':   
     st.title('Telefonía local') 
@@ -485,22 +654,22 @@ if select_mercado == 'Telefonía local':
     Trafico['periodo']=Trafico['anno']+'-T'+Trafico['trimestre']
     Ingresos['periodo']=Ingresos['anno']+'-T'+Ingresos['trimestre']
     Lineas['periodo']=Lineas['anno']+'-T'+Lineas['trimestre']
-    Trafnac=Trafico.groupby(['periodo','empresa'])['trafico'].sum().reset_index()
-    Ingnac=Ingresos.groupby(['periodo','empresa'])['ingresos'].sum().reset_index()
-    Linnac=Lineas.groupby(['periodo','empresa'])['lineas'].sum().reset_index()
+    Trafnac=Trafico.groupby(['periodo','empresa','id_empresa'])['trafico'].sum().reset_index()
+    Ingnac=Ingresos.groupby(['periodo','empresa','id_empresa'])['ingresos'].sum().reset_index()
+    Linnac=Lineas.groupby(['periodo','empresa','id_empresa'])['lineas'].sum().reset_index()
     PERIODOS=Trafnac['periodo'].unique().tolist()
     
-    Trafdpto=Trafico.groupby(['periodo','id_departamento','departamento','empresa'])['trafico'].sum().reset_index()
+    Trafdpto=Trafico.groupby(['periodo','id_departamento','departamento','empresa','id_empresa'])['trafico'].sum().reset_index()
     Trafdpto=Trafdpto[Trafdpto['trafico']>0]
-    Lindpto=Lineas.groupby(['periodo','id_departamento','departamento','empresa'])['lineas'].sum().reset_index()
+    Lindpto=Lineas.groupby(['periodo','id_departamento','departamento','empresa','id_empresa'])['lineas'].sum().reset_index()
     Lindpto=Lindpto[Lindpto['lineas']>0]
 
     
-    Trafmuni=Trafico.groupby(['periodo','id_municipio','municipio','departamento','empresa'])['trafico'].sum().reset_index()
+    Trafmuni=Trafico.groupby(['periodo','id_municipio','municipio','departamento','empresa','id_empresa'])['trafico'].sum().reset_index()
     Trafmuni=Trafmuni[Trafmuni['trafico']>0]
     Trafmuni.insert(1,'codigo',Trafmuni['municipio']+' - '+Trafmuni['id_municipio'])
     Trafmuni=Trafmuni.drop(['id_municipio','municipio'],axis=1)
-    Linmuni=Lineas.groupby(['periodo','id_municipio','municipio','departamento','empresa'])['lineas'].sum().reset_index()
+    Linmuni=Lineas.groupby(['periodo','id_municipio','municipio','departamento','empresa','id_empresa'])['lineas'].sum().reset_index()
     Linmuni=Linmuni[Linmuni['lineas']>0]
     Linmuni.insert(1,'codigo',Linmuni['municipio']+' - '+Linmuni['id_municipio'])
     Linmuni=Linmuni.drop(['id_municipio','municipio'],axis=1)
@@ -638,19 +807,19 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                         
             if select_variable == "Tráfico":
                 colsconTraf=ConcTraf.columns.values.tolist()
-                conc=st.slider('Seleccionar el número de empresas',1,len(colsconTraf)-1,3,1)
+                conc=st.slider('Seleccionar el número de empresas',1,len(colsconTraf)-1,1,1)
                 fig4=PlotlyConcentracion(ConcTraf)
                 st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)
             if select_variable == "Ingresos":
                 colsconIng=ConcIng.columns.values.tolist()
-                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,3,1)
+                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,1,1)
                 fig5=PlotlyConcentracion(ConcIng)
                 st.write(ConcIng.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconIng[conc]]))
                 st.plotly_chart(fig5,use_container_width=True)
             if select_variable == "Líneas":
                 colsconLin=ConcLin.columns.values.tolist()
-                conc=st.slider('Seleccione el número de empresas',1,len(colsconLin)-1,3,1)
+                conc=st.slider('Seleccione el número de empresas',1,len(colsconLin)-1,1,1)
                 fig6=PlotlyConcentracion(ConcLin)
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig6,use_container_width=True)
@@ -859,14 +1028,14 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             if select_variable == "Tráfico":
                 colsconTraf=ConcTraf.columns.values.tolist()
                 value1= len(colsconTraf)-1 if len(colsconTraf)-1 >1 else 2
-                conc=st.slider('Seleccione el número de empresas',1,value1,3,1)
+                conc=st.slider('Seleccione el número de empresas',1,value1,1,1)
                 fig3 = PlotlyConcentracion(ConcTraf) 
                 st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
                 st.plotly_chart(fig3,use_container_width=True)   
             if select_variable == "Líneas":
                 colsconLin=ConcLin.columns.values.tolist()
                 value2= len(colsconLin)-1 if len(colsconLin)-1 >1 else 2
-                conc=st.slider('Seleccione el número de empresas',1,value2,3,1)
+                conc=st.slider('Seleccione el número de empresas',1,value2,1,1)
                 fig4 = PlotlyConcentracion(ConcLin)
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)   
@@ -1149,20 +1318,20 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Tráfico":
                 colsconTraf=ConcTraf.columns.values.tolist()
                 value1= len(colsconTraf)-1 if len(colsconTraf)-1 >1 else 2 
-                conc=st.slider('Seleccionar número de expresas ',1,value1,3,1)
+                conc=st.slider('Seleccionar número de expresas ',1,value1,1,1)
                 fig3 = PlotlyConcentracion(ConcTraf) 
                 st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
                 st.plotly_chart(fig3,use_container_width=True)   
             if select_variable == "Líneas":
                 colsconLin=ConcLin.columns.values.tolist()
                 value2= len(colsconLin)-1 if len(colsconLin)-1 >1 else 2 
-                conc=st.slider('Seleccionar número de expresas ',1,value2,3,1)
+                conc=st.slider('Seleccionar número de expresas ',1,value2,1,1)
                 fig4 = PlotlyConcentracion(ConcLin)
                 st.write(ConcLin.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconLin[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)   
 
         if select_indicador == 'IHH':
-            
+        
             for periodo in PERIODOSTRAF:
                 prTr=Trafdpto[(Trafdpto['departamento']==DPTO)&(Trafdpto['periodo']==periodo)]
                 prLi=Lindpto[(Lindpto['departamento']==DPTO)&(Lindpto['periodo']==periodo)]
@@ -1186,7 +1355,7 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Líneas":
                 AgGrid(LingroupPart3)
                 st.plotly_chart(fig6,use_container_width=True)    
-                
+                            
         if select_indicador == 'Linda':
             dflistTraf2=[];dflistLin2=[];datosTraf=[];datosLin=[];nempresaTraf=[];nempresaLin=[];       
             for periodo in PERIODOSTRAF:              
@@ -1418,26 +1587,37 @@ $$i = 1, 2, ..., n$$
              
 if select_mercado == "Internet fijo":
     st.title('Internet fijo') 
-    AccesosInt=ReadApiINTFAccesos()
+    AccesosIntCorp=ReadApiINTFAccesosCorp()
+    AccesosIntRes=ReadApiINTFAccesosRes()
     IngresosInt=ReadApiINTFIng()
-    AccesosInt['periodo']=AccesosInt['anno']+'-T'+AccesosInt['trimestre']
+    
+    AccesosIntCorp['periodo']=AccesosIntCorp['anno']+'-T'+AccesosIntCorp['trimestre']
+    AccesosIntRes['periodo']=AccesosIntRes['anno']+'-T'+AccesosIntRes['trimestre']
     IngresosInt['periodo']=IngresosInt['anno']+'-T'+IngresosInt['trimestre']
 
-    AccnacInt=AccesosInt.groupby(['periodo','empresa'])['accesos'].sum().reset_index()
-    IngnacInt=IngresosInt.groupby(['periodo','empresa'])['ingresos'].sum().reset_index()
-    PERIODOS=AccnacInt['periodo'].unique().tolist()
+    AccnacIntCorp=AccesosIntCorp.groupby(['periodo','empresa','id_empresa'])['accesos'].sum().reset_index()
+    AccnacIntRes=AccesosIntRes.groupby(['periodo','empresa','id_empresa'])['accesos'].sum().reset_index()
+    IngnacInt=IngresosInt.groupby(['periodo','empresa','id_empresa'])['ingresos'].sum().reset_index()
+    PERIODOS=AccnacIntCorp['periodo'].unique().tolist()
     
-    AccdptoInt=AccesosInt.groupby(['periodo','id_departamento','departamento','empresa'])['accesos'].sum().reset_index()
-    AccdptoInt=AccdptoInt[AccdptoInt['accesos']>0]   
+    AccdptoIntCorp=AccesosIntCorp.groupby(['periodo','id_departamento','departamento','empresa','id_empresa'])['accesos'].sum().reset_index()
+    AccdptoIntRes=AccesosIntRes.groupby(['periodo','id_departamento','departamento','empresa','id_empresa'])['accesos'].sum().reset_index()
+    AccdptoIntCorp=AccdptoIntCorp[AccdptoIntCorp['accesos']>0]
+    AccdptoIntRes=AccdptoIntRes[AccdptoIntRes['accesos']>0]    
  
-    AccmuniInt=AccesosInt.groupby(['periodo','id_municipio','municipio','departamento','empresa'])['accesos'].sum().reset_index()
-    AccmuniInt=AccmuniInt[AccmuniInt['accesos']>0]
-    AccmuniInt.insert(1,'codigo',AccmuniInt['municipio']+' - '+AccmuniInt['id_municipio'])
-    AccmuniInt=AccmuniInt.drop(['id_municipio','municipio'],axis=1)
+    AccmuniIntCorp=AccesosIntCorp.groupby(['periodo','id_municipio','municipio','departamento','empresa','id_empresa'])['accesos'].sum().reset_index()
+    AccmuniIntCorp=AccmuniIntCorp[AccmuniIntCorp['accesos']>0]
+    AccmuniIntCorp.insert(1,'codigo',AccmuniIntCorp['municipio']+' - '+AccmuniIntCorp['id_municipio'])
+    AccmuniIntCorp=AccmuniIntCorp.drop(['id_municipio','municipio'],axis=1)
     
-    dfAccesos=[];dfIngresos=[];
-    dfAccesos2=[];dfIngresos2=[];
-    dfAccesos3=[];dfIngresos3=[];
+    AccmuniIntRes=AccesosIntRes.groupby(['periodo','id_municipio','municipio','departamento','empresa','id_empresa'])['accesos'].sum().reset_index()
+    AccmuniIntRes=AccmuniIntRes[AccmuniIntRes['accesos']>0]
+    AccmuniIntRes.insert(1,'codigo',AccmuniIntRes['municipio']+' - '+AccmuniIntRes['id_municipio'])
+    AccmuniIntRes=AccmuniIntRes.drop(['id_municipio','municipio'],axis=1)
+    
+    dfAccesosCorp=[];dfAccesosRes=[];dfIngresos=[];
+    dfAccesosCorp2=[];dfAccesosRes2=[];dfIngresos2=[];
+    dfAccesosCorp3=[];dfAccesosRes3=[];dfIngresos3=[];
 
     select_dimension=st.sidebar.selectbox('Ámbito',['Departamental','Municipal','Nacional'])
     
@@ -1516,110 +1696,149 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Alta            | $>1$          |""",unsafe_allow_html=True)        
     
         st.write('#### Agregación nacional') 
-        select_variable = st.selectbox('Variable',['Accesos','Ingresos']) 
+        select_variable = st.selectbox('Variable',['Accesos-corporativo','Accesos-residencial','Ingresos']) 
 
         if select_indicador == 'Stenbacka':
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
             for elem in PERIODOS:
-                prAcc=AccnacInt[AccnacInt['periodo']==elem]
-                prAcc.insert(3,'participacion',Participacion(prAcc,'accesos'))
-                prAcc.insert(4,'stenbacka',Stenbacka(prAcc,'accesos',gamma))
-                dfAccesos.append(prAcc.sort_values(by='participacion',ascending=False))
+                prAccCorp=AccnacIntCorp[AccnacIntCorp['periodo']==elem]
+                prAccCorp.insert(3,'participacion',Participacion(prAccCorp,'accesos'))
+                prAccCorp.insert(4,'stenbacka',Stenbacka(prAccCorp,'accesos',gamma))
+                dfAccesosCorp.append(prAccCorp.sort_values(by='participacion',ascending=False))
+                
+                prAccRes=AccnacIntRes[AccnacIntRes['periodo']==elem]
+                prAccRes.insert(3,'participacion',Participacion(prAccRes,'accesos'))
+                prAccRes.insert(4,'stenbacka',Stenbacka(prAccRes,'accesos',gamma))
+                dfAccesosRes.append(prAccRes.sort_values(by='participacion',ascending=False))                
         
                 prIn=IngnacInt[IngnacInt['periodo']==elem]
                 prIn.insert(3,'participacion',Participacion(prIn,'ingresos'))
                 prIn.insert(4,'stenbacka',Stenbacka(prIn,'ingresos',gamma))
                 dfIngresos.append(prIn.sort_values(by='participacion',ascending=False))
         
-            AccgroupPart=pd.concat(dfAccesos)
-            AccgroupPart.participacion=AccgroupPart.participacion.round(4)
-            AccgroupPart=AccgroupPart[AccgroupPart['participacion']>0]
+            AccgroupPartCorp=pd.concat(dfAccesosCorp)
+            AccgroupPartCorp.participacion=AccgroupPartCorp.participacion.round(4)
+            AccgroupPartCorp=AccgroupPartCorp[AccgroupPartCorp['participacion']>0]
+            
+            AccgroupPartRes=pd.concat(dfAccesosRes)
+            AccgroupPartRes.participacion=AccgroupPartRes.participacion.round(4)
+            AccgroupPartRes=AccgroupPartRes[AccgroupPartRes['participacion']>0]
+            
             InggroupPart=pd.concat(dfIngresos)
             InggroupPart.participacion=InggroupPart.participacion.round(4)
             InggroupPart=InggroupPart[InggroupPart['participacion']>0]
 
-            fig1=PlotlyStenbacka(AccgroupPart)
+            fig1a=PlotlyStenbacka(AccgroupPartCorp)
+            fig1b=PlotlyStenbacka(AccgroupPartRes)
             fig2=PlotlyStenbacka(InggroupPart)          
             
-            if select_variable == "Accesos":
-                AgGrid(AccgroupPart)
-                st.plotly_chart(fig1, use_container_width=True)
+            if select_variable == "Accesos-corporativo":
+                AgGrid(AccgroupPartCorp)
+                st.plotly_chart(fig1a, use_container_width=True)
+            if select_variable == "Accesos-residencial":
+                AgGrid(AccgroupPartRes)
+                st.plotly_chart(fig1b, use_container_width=True)                                
             if select_variable == "Ingresos":
                 AgGrid(InggroupPart)
                 st.plotly_chart(fig2, use_container_width=True)
 
         if select_indicador == 'Concentración':
-            dflistAcc=[];dflistIng=[]
+            dflistAccCorp=[];dflistAccRes=[];dflistIng=[]
             
             for elem in PERIODOS:
-                dflistAcc.append(Concentracion(AccnacInt,'accesos',elem))
+                dflistAccCorp.append(Concentracion(AccnacIntCorp,'accesos',elem))
+                dflistAccRes.append(Concentracion(AccnacIntRes,'accesos',elem))
                 dflistIng.append(Concentracion(IngnacInt,'ingresos',elem))
-            ConcAcc=pd.concat(dflistAcc).fillna(1.0)
+            ConcAccCorp=pd.concat(dflistAccCorp).fillna(1.0)
+            ConcAccRes=pd.concat(dflistAccRes).fillna(1.0)
             ConcIng=pd.concat(dflistIng).fillna(1.0)
      
                         
-            if select_variable == "Accesos":
-                colsconAcc=ConcAcc.columns.values.tolist()
-                conc=st.slider('Seleccionar el número de empresas',1,len(colsconAcc)-1,3,1)
-                fig4=PlotlyConcentracion(ConcAcc)
-                st.write(ConcAcc.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAcc[conc]]))
-                st.plotly_chart(fig4,use_container_width=True)
+            if select_variable == "Accesos-corporativo":
+                colsconAccCorp=ConcAccCorp.columns.values.tolist()
+                conc=st.slider('Seleccionar el número de empresas',1,len(colsconAccCorp)-1,1,1)
+                fig4a=PlotlyConcentracion(ConcAccCorp)
+                st.write(ConcAccCorp.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAccCorp[conc]]))
+                st.plotly_chart(fig4a,use_container_width=True)
+            if select_variable == "Accesos-residencial":
+                colsconAccRes=ConcAccRes.columns.values.tolist()
+                conc=st.slider('Seleccionar el número de empresas',1,len(colsconAccRes)-1,1,1)
+                fig4b=PlotlyConcentracion(ConcAccRes)
+                st.write(ConcAccRes.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAccRes[conc]]))
+                st.plotly_chart(fig4b,use_container_width=True)                
             if select_variable == "Ingresos":
                 colsconIng=ConcIng.columns.values.tolist()
-                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,3,1)
+                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,1,1)
                 fig5=PlotlyConcentracion(ConcIng)
                 st.write(ConcIng.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconIng[conc]]))
                 st.plotly_chart(fig5,use_container_width=True)
 
         if select_indicador == 'IHH':
-            PERIODOS=AccnacInt['periodo'].unique().tolist()
+            PERIODOS=AccnacIntCorp['periodo'].unique().tolist()
             for elem in PERIODOS:
-                prAcc=AccnacInt[AccnacInt['periodo']==elem]
-                prAcc.insert(3,'participacion',(prAcc['accesos']/prAcc['accesos'].sum())*100)
-                prAcc.insert(4,'IHH',IHH(prAcc,'accesos'))
-                dfAccesos3.append(prAcc.sort_values(by='participacion',ascending=False))
+                prAccCorp=AccnacIntCorp[AccnacIntCorp['periodo']==elem]
+                prAccCorp.insert(3,'participacion',(prAccCorp['accesos']/prAccCorp['accesos'].sum())*100)
+                prAccCorp.insert(4,'IHH',IHH(prAccCorp,'accesos'))
+                dfAccesosCorp3.append(prAccCorp.sort_values(by='participacion',ascending=False))
                 ##
+                prAccRes=AccnacIntRes[AccnacIntRes['periodo']==elem]
+                prAccRes.insert(3,'participacion',(prAccRes['accesos']/prAccRes['accesos'].sum())*100)
+                prAccRes.insert(4,'IHH',IHH(prAccRes,'accesos'))
+                dfAccesosRes3.append(prAccRes.sort_values(by='participacion',ascending=False))
+                ##                
                 prIn=IngnacInt[IngnacInt['periodo']==elem]
                 prIn.insert(3,'participacion',(prIn['ingresos']/prIn['ingresos'].sum())*100)
                 prIn.insert(4,'IHH',IHH(prIn,'ingresos'))
                 dfIngresos3.append(prIn.sort_values(by='participacion',ascending=False))
                 ##
 
-            AccgroupPart3=pd.concat(dfAccesos3)
+            AccgroupPartCorp3=pd.concat(dfAccesosCorp3)
+            AccgroupPartRes3=pd.concat(dfAccesosRes3)
             InggroupPart3=pd.concat(dfIngresos3)
             
-            IHHTraf=AccgroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
+            IHHAccCorp=AccgroupPartCorp3.groupby(['periodo'])['IHH'].mean().reset_index()
+            IHHAccRes=AccgroupPartRes3.groupby(['periodo'])['IHH'].mean().reset_index()
             IHHIng=InggroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
             
             ##Gráficas
             
-            fig7 = PlotlyIHH(IHHTraf)   
+            fig7a = PlotlyIHH(IHHAccCorp)
+            fig7b = PlotlyIHH(IHHAccRes)            
             fig8 = PlotlyIHH(IHHIng)  
             
-            if select_variable == "Accesos":
-                AgGrid(AccgroupPart3)
-                st.plotly_chart(fig7,use_container_width=True)
+            if select_variable == "Accesos-corporativo":
+                AgGrid(AccgroupPartCorp3)
+                st.plotly_chart(fig7a,use_container_width=True)                
+            if select_variable == "Accesos-residencial":
+                AgGrid(AccgroupPartRes3)
+                st.plotly_chart(fig7b,use_container_width=True)                
             if select_variable == "Ingresos":
                 AgGrid(InggroupPart3)
                 st.plotly_chart(fig8,use_container_width=True)
 
         if select_indicador == 'Linda':
-            dflistAcc2=[];dflistIng2=[]
+            dflistAccCorp2=[];dflistAccRes2=[];dflistIng2=[]
             
             for elem in PERIODOS:
-                dflistAcc2.append(Linda(AccnacInt,'accesos',elem))
+                dflistAccCorp2.append(Linda(AccnacIntCorp,'accesos',elem))
+                dflistAccRes2.append(Linda(AccnacIntRes,'accesos',elem))
                 dflistIng2.append(Linda(IngnacInt,'ingresos',elem))
-            LindAcc=pd.concat(dflistAcc2).reset_index().drop('index',axis=1).fillna(np.nan)
+            LindAccCorp=pd.concat(dflistAccCorp2).reset_index().drop('index',axis=1).fillna(np.nan)
+            LindAccRes=pd.concat(dflistAccRes2).reset_index().drop('index',axis=1).fillna(np.nan)
             LindIng=pd.concat(dflistIng2).reset_index().drop('index',axis=1).fillna(np.nan) 
- 
 
-
-            if select_variable == "Accesos":
-                LindconAcc=LindAcc.columns.values.tolist()
-                lind=st.slider('Seleccionar nivel',2,len(LindconAcc),2,1)
-                fig10=PlotlyLinda(LindAcc)
-                st.write(LindAcc.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAcc[lind-1]]))
-                st.plotly_chart(fig10,use_container_width=True)
+            if select_variable == "Accesos-corporativo":
+                LindconAccCorp=LindAccCorp.columns.values.tolist()
+                lind=st.slider('Seleccionar nivel',2,len(LindconAccCorp),2,1)
+                fig10a=PlotlyLinda(LindAccCorp)
+                st.write(LindAccCorp.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAccCorp[lind-1]]))
+                st.plotly_chart(fig10a,use_container_width=True)
+            if select_variable == "Accesos-residencial":
+                LindconAccRes=LindAccRes.columns.values.tolist()
+                lind=st.slider('Seleccionar nivel',2,len(LindconAccRes),2,1)
+                fig10b=PlotlyLinda(LindAccRes)
+                st.write(LindAccRes.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAccRes[lind-1]]))
+                st.plotly_chart(fig10b,use_container_width=True)                
             if select_variable == "Ingresos":
                 LindconIng=LindIng.columns.values.tolist()            
                 lind=st.slider('Seleccionar nivel',2,len(LindconIng),2,1)
@@ -1704,11 +1923,11 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
         st.write('#### Desagregación municipal')
         col1, col2 = st.columns(2)
         with col1:        
-            select_variable = st.selectbox('Variable',['Accesos'])  
-        MUNICIPIOS=sorted(AccmuniInt.codigo.unique().tolist())
+            select_variable = st.selectbox('Variable',['Accesos-corporativo','Accesos-residencial'])  
+        MUNICIPIOS=sorted(AccmuniIntCorp.codigo.unique().tolist())
         with col2:
             MUNI=st.selectbox('Escoja el municipio', MUNICIPIOS)
-        PERIODOSACC=AccmuniInt[AccmuniInt['codigo']==MUNI]['periodo'].unique().tolist()
+        PERIODOSACC=AccmuniIntCorp[AccmuniIntCorp['codigo']==MUNI]['periodo'].unique().tolist()
         
     ## Cálculo de los indicadores 
     
@@ -1716,83 +1935,142 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
             
             for periodo in PERIODOSACC:
-                prAcc=AccmuniInt[(AccmuniInt['codigo']==MUNI)&(AccmuniInt['periodo']==periodo)]
-                prAcc.insert(5,'participacion',Participacion(prAcc,'accesos'))
-                prAcc.insert(6,'stenbacka',Stenbacka(prAcc,'accesos',gamma))
-                dfAccesos.append(prAcc.sort_values(by='participacion',ascending=False))
-            AccgroupPart=pd.concat(dfAccesos)
+                prAccCorp=AccmuniIntCorp[(AccmuniIntCorp['codigo']==MUNI)&(AccmuniIntCorp['periodo']==periodo)]
+                prAccCorp.insert(5,'participacion',Participacion(prAccCorp,'accesos'))
+                prAccCorp.insert(6,'stenbacka',Stenbacka(prAccCorp,'accesos',gamma))
+                dfAccesosCorp.append(prAccCorp.sort_values(by='participacion',ascending=False))
+
+                prAccRes=AccmuniIntRes[(AccmuniIntRes['codigo']==MUNI)&(AccmuniIntRes['periodo']==periodo)]
+                prAccRes.insert(5,'participacion',Participacion(prAccRes,'accesos'))
+                prAccRes.insert(6,'stenbacka',Stenbacka(prAccRes,'accesos',gamma))
+                dfAccesosRes.append(prAccRes.sort_values(by='participacion',ascending=False))                
+            AccgroupPartCorp=pd.concat(dfAccesosCorp)
+            AccgroupPartRes=pd.concat(dfAccesosRes)
 
             ##Graficas 
             
-            fig1=PlotlyStenbacka(AccgroupPart)
+            fig1a=PlotlyStenbacka(AccgroupPartCorp)
+            fig1b=PlotlyStenbacka(AccgroupPartRes)
                   
-            if select_variable == "Accesos":
-                AgGrid(AccgroupPart)
-                st.plotly_chart(fig1,use_container_width=True)
+            if select_variable == "Accesos-corporativo":
+                AgGrid(AccgroupPartCorp)
+                st.plotly_chart(fig1a,use_container_width=True)
+            if select_variable == "Accesos-residencial":
+                AgGrid(AccgroupPartRes)
+                st.plotly_chart(fig1b,use_container_width=True)                
 
         if select_indicador == 'Concentración':
-            dflistAcc=[]
+            dflistAccCorp=[];dflistAccRes=[];
             
             for periodo in PERIODOSACC:
-                prAcc=AccmuniInt[(AccmuniInt['codigo']==MUNI)&(AccmuniInt['periodo']==periodo)]
-                dflistAcc.append(Concentracion(prAcc,'accesos',periodo))
-            ConcAcc=pd.concat(dflistAcc).fillna(1.0).reset_index().drop('index',axis=1)
+                prAccCorp=AccmuniIntCorp[(AccmuniIntCorp['codigo']==MUNI)&(AccmuniIntCorp['periodo']==periodo)]
+                dflistAccCorp.append(Concentracion(prAccCorp,'accesos',periodo))
+                prAccRes=AccmuniIntRes[(AccmuniIntRes['codigo']==MUNI)&(AccmuniIntRes['periodo']==periodo)]
+                dflistAccRes.append(Concentracion(prAccRes,'accesos',periodo))                
+            ConcAccCorp=pd.concat(dflistAccCorp).fillna(1.0).reset_index().drop('index',axis=1)
+            ConcAccRes=pd.concat(dflistAccRes).fillna(1.0).reset_index().drop('index',axis=1)
                         
-            if select_variable == "Accesos":
-                colsconAcc=ConcAcc.columns.values.tolist()
-                value1= len(colsconAcc)-1 if len(colsconAcc)-1 >1 else 2
-                conc=st.slider('Seleccione el número de empresas',1,value1,3,1)
-                fig3 = PlotlyConcentracion(ConcAcc) 
-                st.write(ConcAcc.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAcc[conc]]))
-                st.plotly_chart(fig3,use_container_width=True)   
+            if select_variable == "Accesos-corporativo":
+                colsconAccCorp=ConcAccCorp.columns.values.tolist()
+                value1= len(colsconAccCorp)-1 if len(colsconAccCorp)-1 >1 else 2
+                conc=st.slider('Seleccione el número de empresas',1,value1,1,1)
+                fig3a = PlotlyConcentracion(ConcAccCorp) 
+                st.write(ConcAccCorp.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAccCorp[conc]]))
+                st.plotly_chart(fig3a,use_container_width=True) 
+            if select_variable == "Accesos-residencial":
+                colsconAccRes=ConcAccRes.columns.values.tolist()
+                value1= len(colsconAccRes)-1 if len(colsconAccRes)-1 >1 else 2
+                conc=st.slider('Seleccione el número de empresas',1,value1,1,1)
+                fig3b = PlotlyConcentracion(ConcAccRes) 
+                st.write(ConcAccRes.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAccRes[conc]]))
+                st.plotly_chart(fig3b,use_container_width=True)                 
 
         if select_indicador == 'IHH':            
             for periodo in PERIODOSACC:
-                prAc=AccmuniInt[(AccmuniInt['codigo']==MUNI)&(AccmuniInt['periodo']==periodo)]
-                prAc.insert(3,'participacion',(prAc['accesos']/prAc['accesos'].sum())*100)
-                prAc.insert(4,'IHH',IHH(prAc,'accesos'))
-                dfAccesos3.append(prAc.sort_values(by='participacion',ascending=False))
+                prAcCorp=AccmuniIntCorp[(AccmuniIntCorp['codigo']==MUNI)&(AccmuniIntCorp['periodo']==periodo)]
+                prAcCorp.insert(3,'participacion',(prAcCorp['accesos']/prAcCorp['accesos'].sum())*100)
+                prAcCorp.insert(4,'IHH',IHH(prAcCorp,'accesos'))
+                dfAccesosCorp3.append(prAcCorp.sort_values(by='participacion',ascending=False))
+                prAcRes=AccmuniIntRes[(AccmuniIntRes['codigo']==MUNI)&(AccmuniIntRes['periodo']==periodo)]
+                prAcRes.insert(3,'participacion',(prAcRes['accesos']/prAcRes['accesos'].sum())*100)
+                prAcRes.insert(4,'IHH',IHH(prAcRes,'accesos'))
+                dfAccesosRes3.append(prAcRes.sort_values(by='participacion',ascending=False))                    
 
-            AccgroupPart3=pd.concat(dfAccesos3)
-            IHHAcc=AccgroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()  
+            AccgroupPartCorp3=pd.concat(dfAccesosCorp3)
+            IHHAccCorp=AccgroupPartCorp3.groupby(['periodo'])['IHH'].mean().reset_index() 
+            AccgroupPartRes3=pd.concat(dfAccesosRes3)
+            IHHAccRes=AccgroupPartRes3.groupby(['periodo'])['IHH'].mean().reset_index()             
             
-            fig5=PlotlyIHH(IHHAcc)
+            fig5a=PlotlyIHH(IHHAccCorp)
+            fig5b=PlotlyIHH(IHHAccRes)
 
-            if select_variable == "Accesos":
-                AgGrid(AccgroupPart3)
-                st.plotly_chart(fig5,use_container_width=True)
+            if select_variable == "Accesos-corporativo":
+                AgGrid(AccgroupPartCorp3)
+                st.plotly_chart(fig5a,use_container_width=True)
+            if select_variable == "Accesos-residencial":
+                AgGrid(AccgroupPartRes3)
+                st.plotly_chart(fig5b,use_container_width=True)                
 
         if select_indicador == 'Linda':
-            dflistAcc2=[];datosAcc=[];nempresaAcc=[];                
+            dflistAccCorp2=[];datosAccCorp=[];nempresaAccCorp=[]; dflistAccRes2=[];datosAccRes=[];nempresaAccRes=[];                
             for periodo in PERIODOSACC:
-                prAc=AccmuniInt[(AccmuniInt['codigo']==MUNI)&(AccmuniInt['periodo']==periodo)]
-                nempresaAcc.append(prAc.empresa.nunique())
-                dflistAcc2.append(Linda(prAc,'accesos',periodo))
-                datosAcc.append(prAc)    
-            NemphisAcc=max(nempresaAcc)  
-            dAcc=pd.concat(datosAcc).reset_index().drop('index',axis=1)
-            LindAcc=pd.concat(dflistAcc2).reset_index().drop('index',axis=1).fillna(np.nan)
+                prAcCorp=AccmuniIntCorp[(AccmuniIntCorp['codigo']==MUNI)&(AccmuniIntCorp['periodo']==periodo)]
+                nempresaAccCorp.append(prAcCorp.empresa.nunique())
+                dflistAccCorp2.append(Linda(prAcCorp,'accesos',periodo))
+                datosAccCorp.append(prAcCorp)    
+                prAcRes=AccmuniIntRes[(AccmuniIntRes['codigo']==MUNI)&(AccmuniIntRes['periodo']==periodo)]
+                nempresaAccRes.append(prAcRes.empresa.nunique())
+                dflistAccRes2.append(Linda(prAcRes,'accesos',periodo))
+                datosAccRes.append(prAcRes)                  
+                
+            NemphisAccCorp=max(nempresaAccCorp)  
+            dAccCorp=pd.concat(datosAccCorp).reset_index().drop('index',axis=1)
+            LindAccCorp=pd.concat(dflistAccCorp2).reset_index().drop('index',axis=1).fillna(np.nan)
+            NemphisAccRes=max(nempresaAccRes)  
+            dAccRes=pd.concat(datosAccRes).reset_index().drop('index',axis=1)
+            LindAccRes=pd.concat(dflistAccRes2).reset_index().drop('index',axis=1).fillna(np.nan)            
                            
-            if select_variable == "Accesos":
-                LindconAcc=LindAcc.columns.values.tolist()
-                if NemphisAcc==1:
+            if select_variable == "Accesos-corporativo":
+                LindconAccCorp=LindAccCorp.columns.values.tolist()
+                if NemphisAccCorp==1:
                     st.write("El índice de linda no está definido para éste municipio pues cuenta con una sola empresa")
-                    st.write(dAcc)
-                elif  NemphisAcc==2:
+                    st.write(dAccCorp)
+                elif  NemphisAccCorp==2:
                     col1, col2 = st.columns([3, 1])
-                    fig10=PlotlyLinda2(LindAcc)
+                    fig10a=PlotlyLinda2(LindAccCorp)
                     col1.write("**Datos completos**")                    
-                    col1.write(dAcc)  
+                    col1.write(dAccCorp)  
                     col2.write("**Índice de Linda**")
-                    col2.write(LindAcc)
-                    st.plotly_chart(fig10,use_container_width=True)        
+                    col2.write(LindAccCorp)
+                    st.plotly_chart(fig10a,use_container_width=True)        
                 else:    
-                    lind=st.slider('Seleccionar nivel',2,len(LindconAcc),2,1)
-                    fig10=PlotlyLinda(LindAcc)
-                    st.write(LindAcc.fillna(np.nan).reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAcc[lind-1]]))
+                    lind=st.slider('Seleccionar nivel',2,len(LindconAccCorp),2,1)
+                    fig10a=PlotlyLinda(LindAccCorp)
+                    st.write(LindAccCorp.fillna(np.nan).reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAccCorp[lind-1]]))
                     with st.expander("Mostrar datos"):
-                        AgGrid(dAcc)                    
-                    st.plotly_chart(fig10,use_container_width=True) 
+                        AgGrid(dAccCorp)                    
+                    st.plotly_chart(fig10a,use_container_width=True) 
+
+            if select_variable == "Accesos-residencial":
+                LindconAccRes=LindAccRes.columns.values.tolist()
+                if NemphisAccRes==1:
+                    st.write("El índice de linda no está definido para éste municipio pues cuenta con una sola empresa")
+                    st.write(dAccRes)
+                elif  NemphisAccRes==2:
+                    col1, col2 = st.columns([3, 1])
+                    fig10b=PlotlyLinda2(LindAccRes)
+                    col1.write("**Datos completos**")                    
+                    col1.write(dAccRes)  
+                    col2.write("**Índice de Linda**")
+                    col2.write(LindAccRes)
+                    st.plotly_chart(fig10b,use_container_width=True)        
+                else:    
+                    lind=st.slider('Seleccionar nivel',2,len(LindconAccRes),2,1)
+                    fig10b=PlotlyLinda(LindAccRes)
+                    st.write(LindAccRes.fillna(np.nan).reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAccRes[lind-1]]))
+                    with st.expander("Mostrar datos"):
+                        AgGrid(dAccRes)                    
+                    st.plotly_chart(fig10b,use_container_width=True) 
                     
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
@@ -1931,138 +2209,209 @@ $$i = 1, 2, ..., n$$
         st.write('#### Agregación departamental') 
         col1, col2 = st.columns(2)
         with col1:
-            select_variable = st.selectbox('Variable',['Accesos']) 
-
-        DEPARTAMENTOSACC=sorted(AccdptoInt.departamento.unique().tolist())
-        DEPARTAMENTOSACC.remove('COLOMBIA')
+            select_variable = st.selectbox('Variable',['Accesos-corporativo','Accesos-residencial']) 
+        
+        
+        DEPARTAMENTOSACC=sorted(AccdptoIntRes.departamento.unique().tolist())
+        #DEPARTAMENTOSACC.remove('COLOMBIA')
     
         with col2:
-            DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSACC,5)
-        PERIODOSACC=AccdptoInt[AccdptoInt['departamento']==DPTO]['periodo'].unique().tolist()
-        
+            DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSACC)
+        PERIODOSACC=AccdptoIntCorp[AccdptoIntCorp['departamento']==DPTO]['periodo'].unique().tolist()
+        PERIODOSACCRES=AccdptoIntRes[AccdptoIntRes['departamento']==DPTO]['periodo'].unique().tolist()
+
     ##Cálculo de los indicadores
     
         if select_indicador == 'Stenbacka':
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)            
         
             for periodo in PERIODOSACC:
-                prAc=AccdptoInt[(AccdptoInt['departamento']==DPTO)&(AccdptoInt['periodo']==periodo)]
-                prAc.insert(5,'participacion',Participacion(prAc,'accesos'))
-                prAc.insert(6,'stenbacka',Stenbacka(prAc,'accesos',gamma))
-                dfAccesos.append(prAc.sort_values(by='participacion',ascending=False))
-            AccgroupPart=pd.concat(dfAccesos) 
+                prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==DPTO)&(AccdptoIntCorp['periodo']==periodo)]
+                prAcCorp.insert(5,'participacion',Participacion(prAcCorp,'accesos'))
+                prAcCorp.insert(6,'stenbacka',Stenbacka(prAcCorp,'accesos',gamma))
+                dfAccesosCorp.append(prAcCorp.sort_values(by='participacion',ascending=False))
+            AccgroupPartCorp=pd.concat(dfAccesosCorp)    
+            
+            for periodo in PERIODOSACCRES:            
+                prAcRes=AccdptoIntRes[(AccdptoIntRes['departamento']==DPTO)&(AccdptoIntRes['periodo']==periodo)]
+                prAcRes.insert(5,'participacion',Participacion(prAcRes,'accesos'))
+                prAcRes.insert(6,'stenbacka',Stenbacka(prAcRes,'accesos',gamma))
+                dfAccesosRes.append(prAcRes.sort_values(by='participacion',ascending=False))                
+            AccgroupPartRes=pd.concat(dfAccesosRes)            
 
             ##Graficas 
             
-            fig1=PlotlyStenbacka(AccgroupPart)
+            fig1a=PlotlyStenbacka(AccgroupPartCorp)
+            fig1b=PlotlyStenbacka(AccgroupPartRes)
 
-            if select_variable == "Accesos":
-                AgGrid(AccgroupPart)
-                st.plotly_chart(fig1,use_container_width=True)
+            if select_variable == "Accesos-corporativo":
+                AgGrid(AccgroupPartCorp)
+                st.plotly_chart(fig1a,use_container_width=True)
+            if select_variable == "Accesos-residencial":
+                AgGrid(AccgroupPartRes)
+                st.plotly_chart(fig1b,use_container_width=True)                
 
         if select_indicador =='Concentración':
-            dflistAcc=[];
+            dflistAccCorp=[];dflistAccRes=[];
 
             for periodo in PERIODOSACC:
-                prAc=AccdptoInt[(AccdptoInt['departamento']==DPTO)&(AccdptoInt['periodo']==periodo)]
-                dflistAcc.append(Concentracion(prAc,'accesos',periodo))
-            ConcAcc=pd.concat(dflistAcc).fillna(1.0).reset_index().drop('index',axis=1)
+                prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==DPTO)&(AccdptoIntCorp['periodo']==periodo)]
+                dflistAccCorp.append(Concentracion(prAcCorp,'accesos',periodo))
+            for periodo in PERIODOSACCRES:    
+                prAcRes=AccdptoIntRes[(AccdptoIntRes['departamento']==DPTO)&(AccdptoIntRes['periodo']==periodo)]
+                dflistAccRes.append(Concentracion(prAcRes,'accesos',periodo))                
+            ConcAccCorp=pd.concat(dflistAccCorp).fillna(1.0).reset_index().drop('index',axis=1)
+            ConcAccRes=pd.concat(dflistAccRes).fillna(1.0).reset_index().drop('index',axis=1)
            
-            if select_variable == "Accesos":
-                colsconAcc=ConcAcc.columns.values.tolist()
-                value1= len(colsconAcc)-1 if len(colsconAcc)-1 >1 else 2 
-                conc=st.slider('Seleccionar número de expresas ',1,value1,3,1)
-                fig3 = PlotlyConcentracion(ConcAcc) 
-                st.write(ConcAcc.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAcc[conc]]))
-                st.plotly_chart(fig3,use_container_width=True)  
+            if select_variable == "Accesos-corporativo":
+                colsconAccCorp=ConcAccCorp.columns.values.tolist()
+                value1= len(colsconAccCorp)-1 if len(colsconAccCorp)-1 >1 else 2 
+                conc=st.slider('Seleccionar número de expresas ',1,value1,1,1)
+                fig3a = PlotlyConcentracion(ConcAccCorp) 
+                st.write(ConcAccCorp.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAccCorp[conc]]))
+                st.plotly_chart(fig3a,use_container_width=True)  
+            if select_variable == "Accesos-residencial":
+                colsconAccRes=ConcAccRes.columns.values.tolist()
+                value1= len(colsconAccRes)-1 if len(colsconAccRes)-1 >1 else 2 
+                conc=st.slider('Seleccionar número de expresas ',1,value1,1,1)
+                fig3b = PlotlyConcentracion(ConcAccRes) 
+                st.write(ConcAccRes.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAccRes[conc]]))
+                st.plotly_chart(fig3b,use_container_width=True)                  
 
         if select_indicador == 'IHH':
             
             for periodo in PERIODOSACC:
-                prAc=AccdptoInt[(AccdptoInt['departamento']==DPTO)&(AccdptoInt['periodo']==periodo)]
-                prAc.insert(3,'participacion',(prAc['accesos']/prAc['accesos'].sum())*100)
-                prAc.insert(4,'IHH',IHH(prAc,'accesos'))
-                dfAccesos3.append(prAc.sort_values(by='participacion',ascending=False))
-            AccgroupPart3=pd.concat(dfAccesos3)
-            IHHAcc=AccgroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()    
+                prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==DPTO)&(AccdptoIntCorp['periodo']==periodo)]
+                prAcCorp.insert(3,'participacion',(prAcCorp['accesos']/prAcCorp['accesos'].sum())*100)
+                prAcCorp.insert(4,'IHH',IHH(prAcCorp,'accesos'))
+                dfAccesosCorp3.append(prAcCorp.sort_values(by='participacion',ascending=False))
+                prAcRes=AccdptoIntRes[(AccdptoIntRes['departamento']==DPTO)&(AccdptoIntRes['periodo']==periodo)]
+                prAcRes.insert(3,'participacion',(prAcRes['accesos']/prAcRes['accesos'].sum())*100)
+                prAcRes.insert(4,'IHH',IHH(prAcRes,'accesos'))
+                dfAccesosRes3.append(prAcRes.sort_values(by='participacion',ascending=False))
+                
+            AccgroupPartCorp3=pd.concat(dfAccesosCorp3)
+            AccgroupPartRes3=pd.concat(dfAccesosRes3)
+            IHHAccCorp=AccgroupPartCorp3.groupby(['periodo'])['IHH'].mean().reset_index()  
+            IHHAccRes=AccgroupPartRes3.groupby(['periodo'])['IHH'].mean().reset_index()              
             
-            fig5=PlotlyIHH(IHHAcc)
+            fig5a=PlotlyIHH(IHHAccCorp)
+            fig5b=PlotlyIHH(IHHAccRes)
 
-            if select_variable == "Accesos":
-                AgGrid(AccgroupPart3)
-                st.plotly_chart(fig5,use_container_width=True)
+            if select_variable == "Accesos-corporativo":
+                AgGrid(AccgroupPartCorp3)
+                st.plotly_chart(fig5a,use_container_width=True)
+            if select_variable == "Accesos-residencial":
+                AgGrid(AccgroupPartRes3)
+                st.plotly_chart(fig5b,use_container_width=True)                
 
         if select_indicador == 'Linda':
-            dflistAcc2=[];datosAcc=[];nempresaAcc=[];       
+            dflistAccCorp2=[];datosAccCorp=[];nempresaAccCorp=[]; dflistAccRes2=[];datosAccRes=[];nempresaAccRes=[];       
             for periodo in PERIODOSACC:              
-                prAc=AccdptoInt[(AccdptoInt['departamento']==DPTO)&(AccdptoInt['periodo']==periodo)]
-                nempresaAcc.append(prAc.empresa.nunique())
-                dflistAcc2.append(Linda(prAc,'accesos',periodo))
-                datosAcc.append(prAc)
+                prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==DPTO)&(AccdptoIntCorp['periodo']==periodo)]
+                nempresaAccCorp.append(prAcCorp.empresa.nunique())
+                dflistAccCorp2.append(Linda(prAcCorp,'accesos',periodo))
+                datosAccCorp.append(prAcCorp)
+                prAcRes=AccdptoIntRes[(AccdptoIntRes['departamento']==DPTO)&(AccdptoIntRes['periodo']==periodo)]
+                nempresaAccRes.append(prAcRes.empresa.nunique())
+                dflistAccRes2.append(Linda(prAcRes,'accesos',periodo))
+                datosAccRes.append(prAcRes)                
 
-            NemphisAcc=max(nempresaAcc)
+            NemphisAccCorp=max(nempresaAccCorp)
+            NemphisAccRes=max(nempresaAccRes)
      
-            dAcc=pd.concat(datosAcc).reset_index().drop('index',axis=1)
-            LindAcc=pd.concat(dflistAcc2).reset_index().drop('index',axis=1).fillna(np.nan)
+            dAccCorp=pd.concat(datosAccCorp).reset_index().drop('index',axis=1)
+            dAccRes=pd.concat(datosAccRes).reset_index().drop('index',axis=1)
+            LindAccCorp=pd.concat(dflistAccCorp2).reset_index().drop('index',axis=1).fillna(np.nan)
+            LindAccRes=pd.concat(dflistAccRes2).reset_index().drop('index',axis=1).fillna(np.nan)
 
-            if select_variable == "Accesos":
-                LindconAcc=LindAcc.columns.values.tolist()
-                if NemphisAcc==1:
+            if select_variable == "Accesos-corporativo":
+                LindconAccCorp=LindAccCorp.columns.values.tolist()
+                if NemphisAccCorp==1:
                     st.write("El índice de linda no está definido para éste departamento pues cuenta con una sola empresa")
-                    st.write(dAcc)
-                elif  NemphisAcc==2:
+                    st.write(dAccCorp)
+                elif  NemphisAccCorp==2:
                     col1, col2 = st.columns([3, 1])
-                    fig10=PlotlyLinda2(LindAcc)
+                    fig10a=PlotlyLinda2(LindAccCorp)
                     col1.write("**Datos completos**")                    
-                    col1.write(dAcc)  
+                    col1.write(dAccCorp)  
                     col2.write("**Índice de Linda**")
-                    col2.write(LindAcc)
-                    st.plotly_chart(fig10,use_container_width=True)        
+                    col2.write(LindAccCorp)
+                    st.plotly_chart(fig10a,use_container_width=True)        
                 else:    
-                    lind=st.slider('Seleccionar nivel',2,len(LindconAcc),2,1)
-                    fig10=PlotlyLinda(LindAcc)
-                    st.write(LindAcc.fillna(np.nan).reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAcc[lind-1]]))
+                    lind=st.slider('Seleccionar nivel',2,len(LindconAccCorp),2,1)
+                    fig10a=PlotlyLinda(LindAccCorp)
+                    st.write(LindAccCorp.fillna(np.nan).reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAccCorp[lind-1]]))
                     with st.expander("Mostrar datos"):
-                        st.write(dAcc)                    
-                    st.plotly_chart(fig10,use_container_width=True)
+                        st.write(dAccCorp)                    
+                    st.plotly_chart(fig10a,use_container_width=True)
+                    
+            if select_variable == "Accesos-residencial":
+                LindconAccRes=LindAccRes.columns.values.tolist()
+                if NemphisAccRes==1:
+                    st.write("El índice de linda no está definido para éste departamento pues cuenta con una sola empresa")
+                    st.write(dAccRes)
+                elif  NemphisAccRes==2:
+                    col1, col2 = st.columns([3, 1])
+                    fig10b=PlotlyLinda2(LindAccRes)
+                    col1.write("**Datos completos**")                    
+                    col1.write(dAccRes)  
+                    col2.write("**Índice de Linda**")
+                    col2.write(LindAccRes)
+                    st.plotly_chart(fig10b,use_container_width=True)        
+                else:    
+                    lind=st.slider('Seleccionar nivel',2,len(LindconAccRes),2,1)
+                    fig10b=PlotlyLinda(LindAccRes)
+                    st.write(LindAccRes.fillna(np.nan).reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAccRes[lind-1]]))
+                    with st.expander("Mostrar datos"):
+                        st.write(dAccRes)                    
+                    st.plotly_chart(fig10b,use_container_width=True)                    
 
         if select_indicador == 'Media entrópica':
 
             for periodo in PERIODOSACC:
-                prAc=AccesosInt[(AccesosInt['departamento']==DPTO)&(AccesosInt['periodo']==periodo)]
-                prAc.insert(4,'media entropica',MediaEntropica(prAc,'accesos')[0])
-                dfAccesos.append(prAc)
-            AccgroupPart=pd.concat(dfAccesos)
-            MEDIAENTROPICAACC=AccgroupPart.groupby(['periodo'])['media entropica'].mean().reset_index()    
+                prAcCorp=AccesosIntCorp[(AccesosIntCorp['departamento']==DPTO)&(AccesosIntCorp['periodo']==periodo)]
+                prAcCorp.insert(4,'media entropica',MediaEntropica(prAcCorp,'accesos')[0])
+                dfAccesosCorp.append(prAcCorp)
+            for periodo in PERIODOSACCRES:    
+                prAcRes=AccesosIntRes[(AccesosIntRes['departamento']==DPTO)&(AccesosIntRes['periodo']==periodo)]
+                prAcRes.insert(4,'media entropica',MediaEntropica(prAcRes,'accesos')[0])
+                dfAccesosRes.append(prAcRes)  
+                
+            AccgroupPartCorp=pd.concat(dfAccesosCorp)
+            AccgroupPartRes=pd.concat(dfAccesosRes)
+            MEDIAENTROPICAACCCORP=AccgroupPartCorp.groupby(['periodo'])['media entropica'].mean().reset_index()    
+            MEDIAENTROPICAACCRES=AccgroupPartRes.groupby(['periodo'])['media entropica'].mean().reset_index()  
         
             #Graficas
             
-            fig7=PlotlyMEntropica(MEDIAENTROPICAACC)
+            fig7a=PlotlyMEntropica(MEDIAENTROPICAACCCORP)
+            fig7b=PlotlyMEntropica(MEDIAENTROPICAACCRES)
             
-            if select_variable == "Accesos":
+            if select_variable == "Accesos-corporativo":
                 periodoME=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOSACC,len(PERIODOSACC)-1)
-                MEperiodTableAcc=MediaEntropica(AccesosInt[(AccesosInt['departamento']==DPTO)&(AccesosInt['periodo']==periodoME)],'accesos')[1] 
+                MEperiodTableAccCorp=MediaEntropica(AccesosIntCorp[(AccesosIntCorp['departamento']==DPTO)&(AccesosIntCorp['periodo']==periodoME)],'accesos')[1] 
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
-                st.plotly_chart(fig7,use_container_width=True)
+                st.plotly_chart(fig7a,use_container_width=True)
                                 
-                dfMap=[];
+                dfMapCorp=[];
                 for departamento in DEPARTAMENTOSACC:
-                    prAc=AccesosInt[(AccesosInt['departamento']==departamento)&(AccesosInt['periodo']==periodoME)]
-                    prAc.insert(4,'media entropica',MediaEntropica(prAc,'accesos')[0])
-                    prAc2=prAc.groupby(['id_departamento','departamento'])['media entropica'].mean().reset_index()
-                    dfMap.append(prAc2)
-                AccMap=pd.concat(dfMap).reset_index().drop('index',axis=1)
+                    prAcCorp=AccesosIntCorp[(AccesosIntCorp['departamento']==departamento)&(AccesosIntCorp['periodo']==periodoME)]
+                    prAcCorp.insert(4,'media entropica',MediaEntropica(prAcCorp,'accesos')[0])
+                    prAcCorp2=prAcCorp.groupby(['id_departamento','departamento'])['media entropica'].mean().reset_index()
+                    dfMapCorp.append(prAcCorp2)
+                AccMapCorp=pd.concat(dfMapCorp).reset_index().drop('index',axis=1)
                 colsME=['SIJ','SI','WJ','MED','MEE','MEI','Media entropica'] 
-                st.write(MEperiodTableAcc.reset_index(drop=True).style.apply(f, axis=0, subset=colsME))
-                departamentos_df=gdf.merge(AccMap, on='id_departamento')
-                departamentos_df['media entropica']=departamentos_df['media entropica'].round(4)
-                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                st.write(MEperiodTableAccCorp.reset_index(drop=True).style.apply(f, axis=0, subset=colsME))
+                departamentos_dfCorp=gdf.merge(AccMapCorp, on='id_departamento')
+                departamentos_dfCorp['media entropica']=departamentos_dfCorp['media entropica'].round(4)
+                colombia_mapCorp = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
                 tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
                 for tile in tiles:
-                    folium.TileLayer(tile).add_to(colombia_map)
+                    folium.TileLayer(tile).add_to(colombia_mapCorp)
                 choropleth=folium.Choropleth(
                     geo_data=Colombian_DPTO,
-                    data=departamentos_df,
+                    data=departamentos_dfCorp,
                     columns=['id_departamento', 'media entropica'],
                     key_on='feature.properties.DPTO',
                     fill_color='Greens', 
@@ -2070,12 +2419,12 @@ $$i = 1, 2, ..., n$$
                     line_opacity=0.9,
                     legend_name='Media entrópica',
                     bins=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
-                    smooth_factor=0).add_to(colombia_map)
+                    smooth_factor=0).add_to(colombia_mapCorp)
                 # Adicionar nombres del departamento
                 style_function = "font-size: 15px; font-weight: bold"
                 choropleth.geojson.add_child(
                     folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
-                folium.LayerControl().add_to(colombia_map)
+                folium.LayerControl().add_to(colombia_mapCorp)
 
                 #Adicionar valores velocidad
                 style_function = lambda x: {'fillColor': '#ffffff', 
@@ -2087,7 +2436,7 @@ $$i = 1, 2, ..., n$$
                                                 'fillOpacity': 0.50, 
                                                 'weight': 0.1}
                 NIL = folium.features.GeoJson(
-                    data = departamentos_df,
+                    data = departamentos_dfCorp,
                     style_function=style_function, 
                     control=False,
                     highlight_function=highlight_function, 
@@ -2097,22 +2446,101 @@ $$i = 1, 2, ..., n$$
                         style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
                     )
                 )
-                colombia_map.add_child(NIL)
-                colombia_map.keep_in_front(NIL)
-                MunicipiosME=MEperiodTableAcc.groupby(['municipio'])['WJ'].mean().reset_index()
-                MunicipiosME=MunicipiosME[MunicipiosME.WJ!=0]
-                MunicipiosME.WJ=MunicipiosME.WJ.round(7)
+                colombia_mapCorp.add_child(NIL)
+                colombia_mapCorp.keep_in_front(NIL)
                 
-                
-                fig9=PlotlyMentropicaTorta(MunicipiosME)
+                MunicipiosMECorp=MEperiodTableAccCorp.groupby(['municipio'])['WJ'].mean().reset_index()
+                MunicipiosMECorp=MunicipiosMECorp[MunicipiosMECorp.WJ!=0]
+                MunicipiosMECorp.WJ=MunicipiosMECorp.WJ.round(7)
+                              
+                fig9a=PlotlyMentropicaTorta(MunicipiosMECorp)
                 
                 col1, col2= st.columns(2)
                 with col1:
                     st.write(r"""###### <center>Visualización de la media entrópica en todos los departamentos y en el periodo seleccionado</center>""",unsafe_allow_html=True)
-                    folium_static(colombia_map,width=480)    
+                    folium_static(colombia_mapCorp,width=480)    
                 with col2:
                     st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)                
-                    st.plotly_chart(fig9,use_container_width=True)
+                    st.plotly_chart(fig9a,use_container_width=True)
+
+
+            if select_variable == "Accesos-residencial":
+                periodoME=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOSACCRES,len(PERIODOSACCRES)-1)
+                MEperiodTableAccRes=MediaEntropica(AccesosIntRes[(AccesosIntRes['departamento']==DPTO)&(AccesosIntRes['periodo']==periodoME)],'accesos')[1] 
+                st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
+                st.plotly_chart(fig7b,use_container_width=True)
+                                
+                dfMapRes=[];
+                for departamento in DEPARTAMENTOSACC:
+                    if AccesosIntRes[(AccesosIntRes['departamento']==departamento)&(AccesosIntRes['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prAcRes=AccesosIntRes[(AccesosIntRes['departamento']==departamento)&(AccesosIntRes['periodo']==periodoME)]
+                        prAcRes.insert(4,'media entropica',MediaEntropica(prAcRes,'accesos')[0])
+                        prAcRes2=prAcRes.groupby(['id_departamento','departamento'])['media entropica'].mean().reset_index()
+                    dfMapRes.append(prAcRes2)
+                AccMapRes=pd.concat(dfMapRes).reset_index().drop('index',axis=1)
+                colsME=['SIJ','SI','WJ','MED','MEE','MEI','Media entropica'] 
+                st.write(MEperiodTableAccRes.reset_index(drop=True).style.apply(f, axis=0, subset=colsME))
+                departamentos_dfRes=gdf.merge(AccMapRes, on='id_departamento')
+                departamentos_dfRes['media entropica']=departamentos_dfRes['media entropica'].round(4)
+                colombia_mapRes = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_mapRes)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_dfRes,
+                    columns=['id_departamento', 'media entropica'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Greens', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Media entrópica',
+                    bins=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+                    smooth_factor=0).add_to(colombia_mapRes)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_mapRes)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_dfRes,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','media entropica'],
+                        aliases=['ID Departamento','Departamento','Media entrópica'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_mapRes.add_child(NIL)
+                colombia_mapRes.keep_in_front(NIL)
+                MunicipiosMERes=MEperiodTableAccRes.groupby(['municipio'])['WJ'].mean().reset_index()
+                MunicipiosMERes=MunicipiosMERes[MunicipiosMERes.WJ!=0]
+                MunicipiosMERes.WJ=MunicipiosMERes.WJ.round(7)
+                
+                
+                fig9b=PlotlyMentropicaTorta(MunicipiosMERes)
+                
+                col1, col2= st.columns(2)
+                with col1:
+                    st.write(r"""###### <center>Visualización de la media entrópica en todos los departamentos y en el periodo seleccionado</center>""",unsafe_allow_html=True)
+                    folium_static(colombia_mapRes,width=480)    
+                with col2:
+                    st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)                
+                    st.plotly_chart(fig9b,use_container_width=True)
 
                    
 if select_mercado == "Televisión por suscripción":
@@ -2124,14 +2552,14 @@ if select_mercado == "Televisión por suscripción":
     SuscriptoresTV['periodo']=SuscriptoresTV['anno']+'-T'+SuscriptoresTV['trimestre'].astype('str')
     IngresosTV['periodo']=IngresosTV['anno']+'-T'+IngresosTV['trimestre']
 
-    SusnacTV=SuscriptoresTV.groupby(['periodo','empresa'])['suscriptores'].sum().reset_index()
-    IngnacTV=IngresosTV.groupby(['periodo','empresa'])['ingresos'].sum().reset_index()
+    SusnacTV=SuscriptoresTV.groupby(['periodo','empresa','id_empresa'])['suscriptores'].sum().reset_index()
+    IngnacTV=IngresosTV.groupby(['periodo','empresa','id_empresa'])['ingresos'].sum().reset_index()
     PERIODOS=SusnacTV['periodo'].unique().tolist()
     
-    SusdptoTV=SuscriptoresTV.groupby(['periodo','id_departamento','departamento','empresa'])['suscriptores'].sum().reset_index()
+    SusdptoTV=SuscriptoresTV.groupby(['periodo','id_departamento','departamento','empresa','id_empresa'])['suscriptores'].sum().reset_index()
     SusdptoTV=SusdptoTV[SusdptoTV['suscriptores']>0]   
  
-    SusmuniTV=SuscriptoresTV.groupby(['periodo','id_municipio','municipio','departamento','empresa'])['suscriptores'].sum().reset_index()
+    SusmuniTV=SuscriptoresTV.groupby(['periodo','id_municipio','municipio','departamento','empresa','id_empresa'])['suscriptores'].sum().reset_index()
     SusmuniTV=SusmuniTV[SusmuniTV['suscriptores']>0]
     SusmuniTV.insert(1,'codigo',SusmuniTV['municipio']+' - '+SusmuniTV['id_municipio'])
 #    SusmuniTV.insert(1,'codigo',SusmuniTV['id_municipio'])
@@ -2262,13 +2690,13 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                         
             if select_variable == "Suscriptores":
                 colsconSus=ConcSus.columns.values.tolist()
-                conc=st.slider('Seleccionar el número de empresas',1,len(colsconSus)-1,3,1)
+                conc=st.slider('Seleccionar el número de empresas',1,len(colsconSus)-1,1,1)
                 fig4=PlotlyConcentracion(ConcSus)
                 st.write(ConcSus.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconSus[conc]]))
                 st.plotly_chart(fig4,use_container_width=True)
             if select_variable == "Ingresos":
                 colsconIng=ConcIng.columns.values.tolist()
-                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,3,1)
+                conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,1,1)
                 fig5=PlotlyConcentracion(ConcIng)
                 st.write(ConcIng.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconIng[conc]]))
                 st.plotly_chart(fig5,use_container_width=True)
@@ -2440,7 +2868,7 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             if select_variable == "Suscriptores":
                 colsconSus=ConcSus.columns.values.tolist()
                 value1= len(colsconSus)-1 if len(colsconSus)-1 >1 else 2
-                conc=st.slider('Seleccione el número de empresas',1,value1,3,1)
+                conc=st.slider('Seleccione el número de empresas',1,value1,1,1)
                 fig3 = PlotlyConcentracion(ConcSus) 
                 st.write(ConcSus.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconSus[conc]]))
                 st.plotly_chart(fig3,use_container_width=True)  
@@ -2670,7 +3098,7 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Suscriptores":
                 colsconSus=ConcSus.columns.values.tolist()
                 value1= len(colsconSus)-1 if len(colsconSus)-1 >1 else 2 
-                conc=st.slider('Seleccionar número de expresas ',1,value1,3,1)
+                conc=st.slider('Seleccionar número de expresas ',1,value1,1,1)
                 fig3 = PlotlyConcentracion(ConcSus) 
                 st.write(ConcSus.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconSus[conc]]))
                 st.plotly_chart(fig3,use_container_width=True)  
@@ -2813,8 +3241,478 @@ $$i = 1, 2, ..., n$$
                     st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)                
                     st.plotly_chart(fig9,use_container_width=True)
 
+   
+if select_mercado == 'Telefonía móvil':   
+    st.title('Telefonía móvil') 
+    Trafico=ReadApiVOZTraf()
+    Ingresos=ReadApiVOZIng()
+    Abonados=ReadApiVOZAbo()
+    Trafico=Trafico[Trafico['trafico']>0]
+    Ingresos=Ingresos[Ingresos['ingresos']>0]
+    Abonados=Abonados[Abonados['abonados']>0]
+    Trafico.insert(0,'periodo',Trafico['anno']+'-T'+Trafico['trimestre'])
+    Ingresos.insert(0,'periodo',Ingresos['anno']+'-T'+Ingresos['trimestre'])
+    Abonados.insert(0,'periodo',Abonados['anno']+'-T'+Abonados['trimestre'])
+    Trafnac=Trafico.groupby(['periodo','empresa','id_empresa'])['trafico'].sum().reset_index()
+    Ingnac=Ingresos.groupby(['periodo','empresa','id_empresa'])['ingresos'].sum().reset_index()
+    Abonac=Abonados.groupby(['periodo','empresa','id_empresa'])['abonados'].sum().reset_index()    
+    PERIODOS=Trafico['periodo'].unique().tolist()    
+    dfTrafico=[];dfIngresos=[];dfAbonados=[]
+    dfTrafico2=[];dfIngresos2=[];dfAbonados2=[]
+    dfTrafico3=[];dfIngresos3=[];dfAbonados3=[]
+
+    
+    select_indicador = st.sidebar.selectbox('Indicador',['Stenbacka', 'Concentración','IHH','Linda'])
+    
+    if select_indicador == 'Stenbacka':
+        st.write("### Índice de Stenbacka")
+        st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
+        #st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+        with st.expander("Información adicional índice de Stenbacka"):
+            st.write(r""" El índice de Stenbacka está dado por la siguiente ecuación""")
+            st.latex(r"""S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]""")
+            st.write(r"""
+**Donde**
+-   $S^{2}_{1}$ y $S^{2}_{2}$ Corresponden a las participaciones de mercado de las dos empresas más grandes, respectivamente.
+-   $\gamma$ es un parámetro de competencia que puede incluir aspectos como: existencia de compradores con poder de mercado, regulación económica, presencia de derechos de propiedad, barreras a la entrada, entre otros (Lis-Guitiérrez, 2013).                
+            """,unsafe_allow_html=True)
+    if select_indicador == 'Concentración':
+        st.write("### Razón de concentración")
+        st.markdown("La razón de concentración es un índice que mide las participaciones acumuladas de las empresas lideres en el mercado. Toma valores entre 0 y 1.")            
+        with st.expander("Información adicional razón de concentración"):
+            st.write("La concentración se calcula de la siguiente forma:")
+            st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
+            st.write(r""" **Donde**:
+-   $S_{i}$ es la participación de mercado de la i-ésima empresa.
+-   $n$ es el número total de empresas consideradas.
+
+De acuerdo con Stazhkova, Kotcofana & Protasov (2017), para un $n = 3$ se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concetración | Rango         |
+|--------------|---------------|
+| Baja         | $<0,45$       |
+| Moderada     | $0,45 - 0,70$ |
+| Alta         | $>0,70$       |
+            
+            
+""")
+    if select_indicador == 'IHH':
+        st.write("### Índice de Herfindahl-Hirschman")
+        st.markdown("El IHH es el índice más aceptado como medida de concentración de la oferta en un mercado. Su cálculo se expresa como la suma de los cuadrados de las participaciones de las empresas que componen el mercado. El índice máximo se obtiene para un monopolio y corresponde a 10000.")            
+        with st.expander("Información adicional IHH"):
+            st.write("La fórmula del IHH está dada como")
+            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
+            st.write(r"""**Donde:**
+-   $S_{i}$ es la participación de mercado de la variable analizada.
+-   $n$ es el número de empresas más grandes consideradas.
+
+De acuerdo con el Departamento de Justicia y la Comisión Federal de Comercio de Estados Unidos (2010), se puede categorizar a un mercado de acuerdo a los siguientes rangos de este índice:
+
+| Mercado                   | Rango          |
+|---------------------------|----------------|
+| Muy competitivo           | $<100$         |
+| Desconcentrado            | $100 - 1500$   |
+| Moderadamente concentrado | $>1500 - 2500$ |
+| Altamente concentrado     | $>2500$        |                
+            """)
+    if select_indicador == 'Linda':
+        st.write("### Índice de Linda")               
+        st.markdown("Este índice es utilizado para medir la desigualdad entre diferentes cuotas de mercado e identificar posibles oligopolios. El índice tomará valores cercanos a 1 en la medida que la participación en el mercado del grupo de empresas grandes es mayor que la participación del grupo de empresas pequeñas.")                    
+        with st.expander("Información adicional indicador de linda"): 
+            st.write("El indicador de Linda está dado por la siguiente ecuación:")
+            st.latex(r'''L = \frac{1}{N(N-1)} \sum_{i=1}^{N-1} (\frac{\overline{X}_{i}}{\overline{X}_{N-i}})''')
+            st.write(r"""**Donde**:
+- $\overline{X}_{i}$ es la participación de mercado media de las primeras i-ésimas empresas.
+- $\overline{X}_{N-i}$ es la partipación de mercado media de las i-ésimas empresas restantes.
+
+De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concentración   | Rango         |
+|-----------------|---------------|
+| Baja            | $<0,20$       |
+| Moderada        | $0,20 - 0,50$ |
+| Concentrada     | $>0,50 - 1$   |
+| Alta            | $>1$          |""",unsafe_allow_html=True)        
+
+    select_variable = st.selectbox('Variable',['Tráfico', 'Ingresos','Abonados']) 
+    
+    ## Cálculo de los indicadores    
+    
+    if select_indicador == 'Stenbacka':
+        gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
+        for elem in PERIODOS:
+            prTr=Trafnac[Trafnac['periodo']==elem]
+            prTr.insert(3,'participacion',Participacion(prTr,'trafico'))
+            prTr.insert(4,'stenbacka',Stenbacka(prTr,'trafico',gamma))
+            dfTrafico.append(prTr.sort_values(by='participacion',ascending=False))
+    
+            prIn=Ingnac[Ingnac['periodo']==elem]
+            prIn.insert(3,'participacion',Participacion(prIn,'ingresos'))
+            prIn.insert(4,'stenbacka',Stenbacka(prIn,'ingresos',gamma))
+            dfIngresos.append(prIn.sort_values(by='participacion',ascending=False))
+    
+            prAb=Abonac[Abonac['periodo']==elem]
+            prAb.insert(3,'participacion',Participacion(prAb,'abonados'))
+            prAb.insert(4,'stenbacka',Stenbacka(prAb,'abonados',gamma))
+            dfAbonados.append(prAb.sort_values(by='participacion',ascending=False)) 
+        TrafgroupPart=pd.concat(dfTrafico)
+        InggroupPart=pd.concat(dfIngresos)
+        AbogroupPart=pd.concat(dfAbonados)
+
+        #Gráficas
+        fig1=PlotlyStenbacka(TrafgroupPart)
+        fig2=PlotlyStenbacka(InggroupPart)
+        fig3=PlotlyStenbacka(AbogroupPart)
+        ##           
+        
+        if select_variable == "Tráfico":
+            AgGrid(TrafgroupPart)
+            st.plotly_chart(fig1, use_container_width=True)
+        if select_variable == "Ingresos":
+            AgGrid(InggroupPart)
+            st.plotly_chart(fig2, use_container_width=True)
+        if select_variable == "Abonados":
+            AgGrid(AbogroupPart)
+            st.plotly_chart(fig3, use_container_width=True)    
+            
+    if select_indicador == 'Concentración':
+        dflistTraf=[];dflistIng=[];dflistAbo=[]
+        
+        for elem in PERIODOS:
+            dflistTraf.append(Concentracion(Trafnac,'trafico',elem))
+            dflistIng.append(Concentracion(Ingnac,'ingresos',elem))
+            dflistAbo.append(Concentracion(Abonac,'abonados',elem))
+        ConcTraf=pd.concat(dflistTraf).fillna(1.0)
+        ConcIng=pd.concat(dflistIng).fillna(1.0)
+        ConcAbo=pd.concat(dflistAbo).fillna(1.0)      
+                    
+        if select_variable == "Tráfico":
+            colsconTraf=ConcTraf.columns.values.tolist()
+            conc=st.slider('Seleccionar el número de empresas',1,len(colsconTraf)-1,1,1)
+            fig4=PlotlyConcentracion(ConcTraf)
+            st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
+            st.plotly_chart(fig4,use_container_width=True)
+        if select_variable == "Ingresos":
+            colsconIng=ConcIng.columns.values.tolist()
+            conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,1,1)
+            fig5=PlotlyConcentracion(ConcIng)
+            st.write(ConcIng.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconIng[conc]]))
+            st.plotly_chart(fig5,use_container_width=True)
+        if select_variable == "Abonados":
+            colsconAbo=ConcAbo.columns.values.tolist()
+            conc=st.slider('Seleccione el número de empresas',1,len(colsconAbo)-1,1,1)
+            fig6=PlotlyConcentracion(ConcAbo)
+            st.write(ConcAbo.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAbo[conc]]))
+            st.plotly_chart(fig6,use_container_width=True)
+
+    if select_indicador == 'IHH':
+        PERIODOS=Trafnac['periodo'].unique().tolist()
+        for elem in PERIODOS:
+            prTr=Trafnac[Trafnac['periodo']==elem]
+            prTr.insert(3,'participacion',(prTr['trafico']/prTr['trafico'].sum())*100)
+            prTr.insert(4,'IHH',IHH(prTr,'trafico'))
+            dfTrafico3.append(prTr.sort_values(by='participacion',ascending=False))
+            ##
+            prIn=Ingnac[Ingnac['periodo']==elem]
+            prIn.insert(3,'participacion',(prIn['ingresos']/prIn['ingresos'].sum())*100)
+            prIn.insert(4,'IHH',IHH(prIn,'ingresos'))
+            dfIngresos3.append(prIn.sort_values(by='participacion',ascending=False))
+            ##
+            prAb=Abonac[Abonac['periodo']==elem]
+            prAb.insert(3,'participacion',(prAb['abonados']/prAb['abonados'].sum())*100)
+            prAb.insert(4,'IHH',IHH(prAb,'abonados'))
+            dfAbonados3.append(prAb.sort_values(by='participacion',ascending=False))
+        TrafgroupPart3=pd.concat(dfTrafico3)
+        InggroupPart3=pd.concat(dfIngresos3)
+        AbogroupPart3=pd.concat(dfAbonados3)
+        IHHTraf=TrafgroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
+        IHHIng=InggroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
+        IHHAbo=AbogroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
+        
+        ##Gráficas
+        
+        fig7 = PlotlyIHH(IHHTraf)   
+        fig8 = PlotlyIHH(IHHIng)
+        fig9 = PlotlyIHH(IHHAbo)  
+        
+        if select_variable == "Tráfico":
+            AgGrid(TrafgroupPart3)
+            st.plotly_chart(fig7,use_container_width=True)
+        if select_variable == "Ingresos":
+            AgGrid(InggroupPart3)
+            st.plotly_chart(fig8,use_container_width=True)
+        if select_variable == "Abonados":
+            AgGrid(AbogroupPart3)
+            st.plotly_chart(fig9,use_container_width=True)
+            
+    if select_indicador == 'Linda':
+        dflistTraf2=[];dflistIng2=[];dflistAbo2=[]
+        
+        for elem in PERIODOS:
+            dflistTraf2.append(Linda(Trafnac,'trafico',elem))
+            dflistIng2.append(Linda(Ingnac,'ingresos',elem))
+            dflistAbo2.append(Linda(Abonac,'abonados',elem))
+        LindTraf=pd.concat(dflistTraf2).reset_index().drop('index',axis=1).fillna(np.nan)
+        LindIng=pd.concat(dflistIng2).reset_index().drop('index',axis=1).fillna(np.nan) 
+        LindAbo=pd.concat(dflistAbo2).reset_index().drop('index',axis=1).fillna(np.nan)     
 
 
+        if select_variable == "Tráfico":
+            LindconTraf=LindTraf.columns.values.tolist()
+            lind=st.slider('Seleccionar nivel',2,len(LindconTraf),2,1)
+            fig10=PlotlyLinda(LindTraf)
+            st.write(LindTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconTraf[lind-1]]))
+            st.plotly_chart(fig10,use_container_width=True)
+        if select_variable == "Ingresos":
+            LindconIng=LindIng.columns.values.tolist()            
+            lind=st.slider('Seleccionar nivel',2,len(LindconIng),2,1)
+            fig11=PlotlyLinda(LindIng)
+            st.write(LindIng.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconIng[lind-1]]))
+            st.plotly_chart(fig11,use_container_width=True)
+        if select_variable == "Abonados":
+            LindconAbo=LindAbo.columns.values.tolist()            
+            lind=st.slider('Seleccionar nivel',2,len(LindconAbo),2,1)
+            fig12=PlotlyLinda(LindAbo)
+            st.write(LindAbo.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAbo[lind-1]]))
+            st.plotly_chart(fig12,use_container_width=True)                           
+
+
+if select_mercado == 'Internet móvil':
+    st.title('Internet móvil') 
+    Trafico=ReadApiIMTraf()
+    Ingresos=ReadApiIMIng()
+    Accesos=ReadApiIMAccesos()
+
+    Trafico=Trafico[Trafico['trafico']>0]
+    Ingresos=Ingresos[Ingresos['ingresos']>0]
+    Accesos=Accesos[Accesos['accesos']>0]
+    Trafico.insert(0,'periodo',Trafico['anno']+'-T'+Trafico['trimestre'])
+    Ingresos.insert(0,'periodo',Ingresos['anno']+'-T'+Ingresos['trimestre'])
+    Accesos.insert(0,'periodo',Accesos['anno']+'-T'+Accesos['trimestre'])
+
+    Trafnac=Trafico.groupby(['periodo','empresa','id_empresa'])['trafico'].sum().reset_index()
+    Ingnac=Ingresos.groupby(['periodo','empresa','id_empresa'])['ingresos'].sum().reset_index()
+    Accnac=Accesos.groupby(['periodo','empresa','id_empresa'])['accesos'].sum().reset_index()    
+    PERIODOS=Trafico['periodo'].unique().tolist()    
+    dfTrafico=[];dfIngresos=[];dfAccesos=[]
+    dfTrafico2=[];dfIngresos2=[];dfAccesos2=[]
+    dfTrafico3=[];dfIngresos3=[];dfAccesos3=[]
+    
+    select_indicador = st.sidebar.selectbox('Indicador',['Stenbacka', 'Concentración','IHH','Linda'])
+    
+    if select_indicador == 'Stenbacka':
+        st.write("### Índice de Stenbacka")
+        st.markdown("Este índice de dominancia es una medida para identificar cuándo una empresa podría tener posición dominante en un mercado determinado. Se considera la participación de mercado de las dos empresas con mayor participación y se calcula un umbral de cuota de mercado después del cual la empresa lider posiblemente ostentaría posición de dominio. Cualquier couta de mercado superior a dicho umbral podría significar una dominancia en el mercado.")
+        #st.latex(r'''S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]''')       
+        with st.expander("Información adicional índice de Stenbacka"):
+            st.write(r""" El índice de Stenbacka está dado por la siguiente ecuación""")
+            st.latex(r"""S^{D}=\frac{1}{2}\left[1-\gamma(S_{1}^{2}-S_{2}^{2})\right]""")
+            st.write(r"""
+**Donde**
+-   $S^{2}_{1}$ y $S^{2}_{2}$ Corresponden a las participaciones de mercado de las dos empresas más grandes, respectivamente.
+-   $\gamma$ es un parámetro de competencia que puede incluir aspectos como: existencia de compradores con poder de mercado, regulación económica, presencia de derechos de propiedad, barreras a la entrada, entre otros (Lis-Guitiérrez, 2013).                
+            """,unsafe_allow_html=True)
+    if select_indicador == 'Concentración':
+        st.write("### Razón de concentración")
+        st.markdown("La razón de concentración es un índice que mide las participaciones acumuladas de las empresas lideres en el mercado. Toma valores entre 0 y 1.")            
+        with st.expander("Información adicional razón de concentración"):
+            st.write("La concentración se calcula de la siguiente forma:")
+            st.latex(r''' CR_{n}=S_1+S_2+S_3+...+S_n=\sum_{i=1}^{n}S_{i}''')
+            st.write(r""" **Donde**:
+-   $S_{i}$ es la participación de mercado de la i-ésima empresa.
+-   $n$ es el número total de empresas consideradas.
+
+De acuerdo con Stazhkova, Kotcofana & Protasov (2017), para un $n = 3$ se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concetración | Rango         |
+|--------------|---------------|
+| Baja         | $<0,45$       |
+| Moderada     | $0,45 - 0,70$ |
+| Alta         | $>0,70$       |
+            
+            
+""")
+    if select_indicador == 'IHH':
+        st.write("### Índice de Herfindahl-Hirschman")
+        st.markdown("El IHH es el índice más aceptado como medida de concentración de la oferta en un mercado. Su cálculo se expresa como la suma de los cuadrados de las participaciones de las empresas que componen el mercado. El índice máximo se obtiene para un monopolio y corresponde a 10000.")            
+        with st.expander("Información adicional IHH"):
+            st.write("La fórmula del IHH está dada como")
+            st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
+            st.write(r"""**Donde:**
+-   $S_{i}$ es la participación de mercado de la variable analizada.
+-   $n$ es el número de empresas más grandes consideradas.
+
+De acuerdo con el Departamento de Justicia y la Comisión Federal de Comercio de Estados Unidos (2010), se puede categorizar a un mercado de acuerdo a los siguientes rangos de este índice:
+
+| Mercado                   | Rango          |
+|---------------------------|----------------|
+| Muy competitivo           | $<100$         |
+| Desconcentrado            | $100 - 1500$   |
+| Moderadamente concentrado | $>1500 - 2500$ |
+| Altamente concentrado     | $>2500$        |                
+            """)
+    if select_indicador == 'Linda':
+        st.write("### Índice de Linda")               
+        st.markdown("Este índice es utilizado para medir la desigualdad entre diferentes cuotas de mercado e identificar posibles oligopolios. El índice tomará valores cercanos a 1 en la medida que la participación en el mercado del grupo de empresas grandes es mayor que la participación del grupo de empresas pequeñas.")                    
+        with st.expander("Información adicional indicador de linda"): 
+            st.write("El indicador de Linda está dado por la siguiente ecuación:")
+            st.latex(r'''L = \frac{1}{N(N-1)} \sum_{i=1}^{N-1} (\frac{\overline{X}_{i}}{\overline{X}_{N-i}})''')
+            st.write(r"""**Donde**:
+- $\overline{X}_{i}$ es la participación de mercado media de las primeras i-ésimas empresas.
+- $\overline{X}_{N-i}$ es la partipación de mercado media de las i-ésimas empresas restantes.
+
+De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de concentración para un mercado:
+
+| Concentración   | Rango         |
+|-----------------|---------------|
+| Baja            | $<0,20$       |
+| Moderada        | $0,20 - 0,50$ |
+| Concentrada     | $>0,50 - 1$   |
+| Alta            | $>1$          |""",unsafe_allow_html=True)        
+
+    select_variable = st.selectbox('Variable',['Tráfico', 'Ingresos','Accesos']) 
+    
+    ## Cálculo de los indicadores    
+    
+    if select_indicador == 'Stenbacka':
+        gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
+        for elem in PERIODOS:
+            prTr=Trafnac[Trafnac['periodo']==elem]
+            prTr.insert(3,'participacion',Participacion(prTr,'trafico'))
+            prTr.insert(4,'stenbacka',Stenbacka(prTr,'trafico',gamma))
+            dfTrafico.append(prTr.sort_values(by='participacion',ascending=False))            
+            
+            prIn=Ingnac[Ingnac['periodo']==elem]
+            prIn.insert(3,'participacion',Participacion(prIn,'ingresos'))
+            prIn.insert(4,'stenbacka',Stenbacka(prIn,'ingresos',gamma))
+            dfIngresos.append(prIn.sort_values(by='participacion',ascending=False))
+    
+            prAc=Accnac[Accnac['periodo']==elem]
+            prAc.insert(3,'participacion',Participacion(prAc,'accesos'))
+            prAc.insert(4,'stenbacka',Stenbacka(prAc,'accesos',gamma))
+                     
+            dfAccesos.append(prAc.sort_values(by='participacion',ascending=False)) 
+        TrafgroupPart=pd.concat(dfTrafico)
+        InggroupPart=pd.concat(dfIngresos)
+        AccgroupPart=pd.concat(dfAccesos)
+
+        #Gráficas
+        fig1=PlotlyStenbacka(TrafgroupPart)
+        fig2=PlotlyStenbacka(InggroupPart)
+        fig3=PlotlyStenbacka(AccgroupPart)
+        ##           
+               
+        if select_variable == "Tráfico":
+            AgGrid(TrafgroupPart)
+            st.plotly_chart(fig1, use_container_width=True)
+        if select_variable == "Ingresos":
+            AgGrid(InggroupPart)
+            st.plotly_chart(fig2, use_container_width=True)
+        if select_variable == "Accesos":
+            AgGrid(AccgroupPart)
+            st.plotly_chart(fig3, use_container_width=True)      
+
+    if select_indicador == 'Concentración':
+        dflistTraf=[];dflistIng=[];dflistAcc=[]
+        
+        for elem in PERIODOS:
+            dflistTraf.append(Concentracion(Trafnac,'trafico',elem))
+            dflistIng.append(Concentracion(Ingnac,'ingresos',elem))
+            dflistAcc.append(Concentracion(Accnac,'accesos',elem))
+        ConcTraf=pd.concat(dflistTraf).fillna(1.0)
+        ConcIng=pd.concat(dflistIng).fillna(1.0)
+        ConcAcc=pd.concat(dflistAcc).fillna(1.0)      
+                    
+        if select_variable == "Tráfico":
+            colsconTraf=ConcTraf.columns.values.tolist()
+            conc=st.slider('Seleccionar el número de empresas',1,len(colsconTraf)-1,1,1)
+            fig4=PlotlyConcentracion(ConcTraf)
+            st.write(ConcTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconTraf[conc]]))
+            st.plotly_chart(fig4,use_container_width=True)
+        if select_variable == "Ingresos":
+            colsconIng=ConcIng.columns.values.tolist()
+            conc=st.slider('Seleccione el número de empresas',1,len(colsconIng)-1,1,1)
+            fig5=PlotlyConcentracion(ConcIng)
+            st.write(ConcIng.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconIng[conc]]))
+            st.plotly_chart(fig5,use_container_width=True)
+        if select_variable == "Accesos":
+            colsconAcc=ConcAcc.columns.values.tolist()
+            conc=st.slider('Seleccione el número de empresas',1,len(colsconAcc)-1,1,1)
+            fig6=PlotlyConcentracion(ConcAcc)
+            st.write(ConcAcc.reset_index(drop=True).style.apply(f, axis=0, subset=[colsconAcc[conc]]))
+            st.plotly_chart(fig6,use_container_width=True)
+            
+    if select_indicador == 'IHH':
+        PERIODOS=Trafnac['periodo'].unique().tolist()
+        for elem in PERIODOS:
+            prTr=Trafnac[Trafnac['periodo']==elem]
+            prTr.insert(3,'participacion',(prTr['trafico']/prTr['trafico'].sum())*100)
+            prTr.insert(4,'IHH',IHH(prTr,'trafico'))
+            dfTrafico3.append(prTr.sort_values(by='participacion',ascending=False))
+            ##
+            prIn=Ingnac[Ingnac['periodo']==elem]
+            prIn.insert(3,'participacion',(prIn['ingresos']/prIn['ingresos'].sum())*100)
+            prIn.insert(4,'IHH',IHH(prIn,'ingresos'))
+            dfIngresos3.append(prIn.sort_values(by='participacion',ascending=False))
+            ##
+            prAc=Accnac[Accnac['periodo']==elem]
+            prAc.insert(3,'participacion',(prAc['accesos']/prAc['accesos'].sum())*100)
+            prAc.insert(4,'IHH',IHH(prAc,'accesos'))
+            dfAccesos3.append(prAc.sort_values(by='participacion',ascending=False))
+        TrafgroupPart3=pd.concat(dfTrafico3)
+        InggroupPart3=pd.concat(dfIngresos3)
+        AccgroupPart3=pd.concat(dfAccesos3)
+        IHHTraf=TrafgroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
+        IHHIng=InggroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
+        IHHAcc=AccgroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
+        
+        ##Gráficas
+        
+        fig7 = PlotlyIHH(IHHTraf)   
+        fig8 = PlotlyIHH(IHHIng)
+        fig9 = PlotlyIHH(IHHAcc)  
+        
+        if select_variable == "Tráfico":
+            AgGrid(TrafgroupPart3)
+            st.plotly_chart(fig7,use_container_width=True)
+        if select_variable == "Ingresos":
+            AgGrid(InggroupPart3)
+            st.plotly_chart(fig8,use_container_width=True)
+        if select_variable == "Accesos":
+            AgGrid(AccgroupPart3)
+            st.plotly_chart(fig9,use_container_width=True)
+            
+    if select_indicador == 'Linda':
+        dflistTraf2=[];dflistIng2=[];dflistAcc2=[]
+        
+        for elem in PERIODOS:
+            dflistTraf2.append(Linda(Trafnac,'trafico',elem))
+            dflistIng2.append(Linda(Ingnac,'ingresos',elem))
+            dflistAcc2.append(Linda(Accnac,'accesos',elem))
+        LindTraf=pd.concat(dflistTraf2).reset_index().drop('index',axis=1).fillna(np.nan)
+        LindIng=pd.concat(dflistIng2).reset_index().drop('index',axis=1).fillna(np.nan) 
+        LindAcc=pd.concat(dflistAcc2).reset_index().drop('index',axis=1).fillna(np.nan)     
+
+
+        if select_variable == "Tráfico":
+            LindconTraf=LindTraf.columns.values.tolist()
+            lind=st.slider('Seleccionar nivel',2,len(LindconTraf),2,1)
+            fig10=PlotlyLinda(LindTraf)
+            st.write(LindTraf.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconTraf[lind-1]]))
+            st.plotly_chart(fig10,use_container_width=True)
+        if select_variable == "Ingresos":
+            LindconIng=LindIng.columns.values.tolist()            
+            lind=st.slider('Seleccionar nivel',2,len(LindconIng),2,1)
+            fig11=PlotlyLinda(LindIng)
+            st.write(LindIng.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconIng[lind-1]]))
+            st.plotly_chart(fig11,use_container_width=True)
+        if select_variable == "Accesos":
+            LindconAcc=LindAcc.columns.values.tolist()            
+            lind=st.slider('Seleccionar nivel',2,len(LindconAcc),2,1)
+            fig12=PlotlyLinda(LindAcc)
+            st.write(LindAcc.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAcc[lind-1]]))
+            st.plotly_chart(fig12,use_container_width=True)                
+            
 
 
 st.write(r"""<hr>""", unsafe_allow_html=True)
