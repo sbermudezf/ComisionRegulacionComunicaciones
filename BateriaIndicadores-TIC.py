@@ -2964,7 +2964,7 @@ $$i = 1, 2, ..., n$$
                                 
                 dfMapCorp=[];
                 for departamento in DEPARTAMENTOSACC:
-                    prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)]
+                    prAcCorp=AccesosIntCorp[(AccesosIntCorp['departamento']==departamento)&(AccesosIntCorp['periodo']==periodoME)]
                     prAcCorp.insert(4,'media entropica',MediaEntropica(prAcCorp,'accesos')[0])
                     prAcCorp2=prAcCorp.groupby(['id_departamento','departamento'])['media entropica'].mean().reset_index()
                     dfMapCorp.append(prAcCorp2)
