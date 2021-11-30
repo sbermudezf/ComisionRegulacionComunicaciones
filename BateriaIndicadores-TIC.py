@@ -4266,7 +4266,7 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
     ## Cálculo de los indicadores    
     
     if select_indicador == 'Stenbacka':
-        gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
+        gamma=st.slider('Seleccionar valor gamma',0.0,2.0,0.1)
         for elem in PERIODOS:
             prTr=Trafnac[Trafnac['periodo']==elem]
             prTr.insert(3,'participacion',Participacion(prTr,'trafico'))
