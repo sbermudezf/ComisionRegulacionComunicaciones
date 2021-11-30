@@ -46,6 +46,12 @@ for index in range(len(Colombian_DPTO['features'])):
 denominations_json=sorted(denominations_json)
 gdf=gdf.rename(columns={"NOMBRE_DPT":'departamento','DPTO':'id_departamento'})
 
+Colombian_MUNI=json.load(open("co_2018_MGN_MPIO_POLITICO.geojson", 'r'))
+gdf2 = gpd.read_file("co_2018_MGN_MPIO_POLITICO.geojson")
+gdf2=gdf2.rename(columns={'MPIO_CNMBR':'municipio','MPIO_CCNCT':'id_municipio'})
+#gdf2.id_municipio=gdf2.id_municipio.str.lstrip('0')
+gdf2.insert(1,'codigo',gdf2['municipio']+' - '+gdf2['id_municipio'])
+
 ##Definición funciones indicadores
 @st.cache
 def Participacion(df,column):
@@ -144,8 +150,8 @@ def PlotlyStenbacka(df):
         hovertemplate =
         '<br><b>Periodo</b>: %{x}<br>'+                         
         '<br><b>Stenbacka</b>: %{y:.4f}<br>'))    
-    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text="PERIODO",row=1, col=1)
-    fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="PARTICIPACIÓN", row=1, col=1)
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
+    fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Participación (%)", row=1, col=1)
     fig.update_layout(height=550,title="<b> Participación por periodo</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
     fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(192, 192, 192, 0.4)')
@@ -157,7 +163,7 @@ def PlotlyConcentracion(df):
     fig.add_trace(go.Bar(x=df['periodo'], y=flatten(df.iloc[:, [conc]].values),hovertemplate =
     '<br><b>Periodo</b>: %{x}<br>'+                         
     '<br><b>Concentración</b>: %{y:.4f}<br>',name=''))
-    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text="PERIODO",row=1, col=1)
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
     fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Concentración", row=1, col=1)
     fig.update_layout(height=550,title="<b> Razón de concentración por periodo</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
@@ -183,7 +189,7 @@ def PlotlyIHH(df):
                          hovertemplate =
         '<br><b>Periodo</b>: %{x}<br>'+                         
         '<br><b>IHH</b>: %{y:.4f}<br>',name=''))
-    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text="PERIODO",row=1, col=1)
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
     fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Concentración", row=1, col=1)
     fig.update_layout(height=550,title="<b> Índice Herfindahl-Hirschman</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
@@ -210,7 +216,7 @@ def PlotlyMEntropica(df):
         name='',hovertemplate =
         '<br><b>Periodo</b>: %{x}<br>'+                         
         '<br><b>MEDIA ENTROPICA</b>: %{y:.4f}<br>')) 
-    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text="PERIODO",row=1, col=1)
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
     fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="MEDIA ENTROPICA", row=1, col=1)
     fig.update_layout(height=550,title="<b>Evolución Media entrópica</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
@@ -238,7 +244,7 @@ def PlotlyLinda(df):
     fig.add_trace(go.Bar(x=df['periodo'], y=flatten(df.iloc[:, [lind-1]].values),hovertemplate =
     '<br><b>Periodo</b>: %{x}<br>'+                         
     '<br><b>Linda</b>: %{y:.4f}<br>',name=''))
-    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text="PERIODO",row=1, col=1)
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
     fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Linda", row=1, col=1)
     fig.update_layout(height=550,title="<b> Índice de Linda por periodo</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
@@ -252,7 +258,7 @@ def PlotlyLinda2(df):
     fig.add_trace(go.Bar(x=df['periodo'], y=df['Linda (2)'],hovertemplate =
     '<br><b>Periodo</b>: %{x}<br>'+                         
     '<br><b>Linda</b>: %{y:.4f}<br>',name=''))
-    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text="PERIODO",row=1, col=1)
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=N,row=1, col=1)
     fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Linda", row=1, col=1)
     fig.update_layout(height=550,title="<b> Índice de Linda por periodo</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
@@ -263,11 +269,14 @@ def PlotlyLinda2(df):
     return fig                
 LogoComision="data:image/png;base64,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"
 LogoComision2="https://www.postdata.gov.co/sites/all/themes/nuboot_radix/logo-crc-blanco.png"
+LogoMercadoTIC="https://upload.wikimedia.org/wikipedia/commons/4/41/Noun_project_network_icon_1365244_cc.svg"
 # Set page title and favicon.
 
 st.set_page_config(
     page_title="Batería de indicadores", page_icon=LogoComision,layout="wide",initial_sidebar_state="expanded")
-     
+
+
+st.markdown("""<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">""",unsafe_allow_html=True)     
 st.markdown(
     """
     <style>
@@ -347,6 +356,7 @@ st.markdown("""
     </div>
 </div>""",unsafe_allow_html=True)
 #st.sidebar.image(LogoComision2, use_column_width=True)
+#st.sidebar.image(LogoMercadoTIC, width=100)
 st.markdown(r""" **<center><ins>Guía de uso de la batería de indicadores para el análisis de competencia</ins></center>**
 - Use el menú de la barra de la izquierda para seleccionar el mercado sobre el cuál le gustaría realizar el cálculo de los indicadores.
 - Elija el ámbito del mercado: Departamental, Municipal, Nacional.
@@ -355,7 +365,7 @@ st.markdown(r""" **<center><ins>Guía de uso de la batería de indicadores para 
 """,unsafe_allow_html=True)  
 st.sidebar.markdown("""<b>Seleccione el indicador a calcular</b>""", unsafe_allow_html=True)
 
-select_mercado = st.sidebar.selectbox('Mercado',
+select_mercado = st.sidebar.selectbox('Servicio',
                                     ['Telefonía local','Telefonía móvil', 'Internet fijo','Internet móvil','Televisión por suscripción'])
                               
 #API 
@@ -647,10 +657,13 @@ def ReadApiINTFAccesosRes():
     
     
 if select_mercado == 'Telefonía local':   
-    st.title('Telefonía local') 
+    #st.markdown(r"""<h1 id="logotel"><span class="material-icons material-icons-two-tone" style="font-size:36px">local_phone</span> <span>Telefonía local</span></h1>""",unsafe_allow_html=True) 
+    st.title('Telefonía local')
     Trafico=ReadAPITrafTL()
     Ingresos=ReadAPIIngTL()
     Lineas=ReadAPILinTL()
+    Trafico.id_municipio=Trafico.id_municipio.str.zfill(5)
+    Lineas.id_municipio=Lineas.id_municipio.str.zfill(5)
     Trafico['periodo']=Trafico['anno']+'-T'+Trafico['trimestre']
     Ingresos['periodo']=Ingresos['anno']+'-T'+Ingresos['trimestre']
     Lineas['periodo']=Lineas['anno']+'-T'+Lineas['trimestre']
@@ -668,7 +681,7 @@ if select_mercado == 'Telefonía local':
     Trafmuni=Trafico.groupby(['periodo','id_municipio','municipio','departamento','empresa','id_empresa'])['trafico'].sum().reset_index()
     Trafmuni=Trafmuni[Trafmuni['trafico']>0]
     Trafmuni.insert(1,'codigo',Trafmuni['municipio']+' - '+Trafmuni['id_municipio'])
-    Trafmuni=Trafmuni.drop(['id_municipio','municipio'],axis=1)
+    Trafmuni=Trafmuni.drop(['municipio'],axis=1)
     Linmuni=Lineas.groupby(['periodo','id_municipio','municipio','departamento','empresa','id_empresa'])['lineas'].sum().reset_index()
     Linmuni=Linmuni[Linmuni['lineas']>0]
     Linmuni.insert(1,'codigo',Linmuni['municipio']+' - '+Linmuni['id_municipio'])
@@ -982,7 +995,7 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
     
     ## Cálculo de los indicadores 
     
-        if select_indicador == 'Stenbacka':                        
+        if select_indicador == 'Stenbacka':       
             gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)
             
             for periodo in PERIODOSTRAF:
@@ -1009,6 +1022,69 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             if select_variable == "Tráfico":
                 AgGrid(TrafgroupPart)
                 st.plotly_chart(fig1,use_container_width=True)
+                # st.markdown('#### Visualización municipal del Stenbacka')
+                # periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSTRAF,len(PERIODOSTRAF)-1)
+                # dfMap=[];
+                # for municipios in MUNICIPIOS:
+                    # if Trafmuni[(Trafmuni['codigo']==municipios)&(Trafmuni['periodo']==periodoME)].empty==True:
+                        # pass
+                    # else:                   
+                        # prTr2=Trafmuni[(Trafmuni['codigo']==municipios)&(Trafmuni['periodo']==periodoME)]
+                        # prTr2.insert(5,'participacion',Participacion(prTr2,'trafico'))
+                        # prTr2.insert(6,'stenbacka',Stenbacka(prTr2,'trafico',gamma))
+                        # StenMUNI=prTr2.groupby(['id_municipio','codigo'])['stenbacka'].mean().reset_index()
+                        # dfMap.append(StenMUNI) 
+                # StenMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                # municipios_df=gdf2.merge(StenMap, on='id_municipio')
+
+                # colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                # tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                # for tile in tiles:
+                    # folium.TileLayer(tile).add_to(colombia_map)
+                # choropleth=folium.Choropleth(
+                    # geo_data=Colombian_MUNI,
+                    # data=municipios_df,
+                    # columns=['id_municipio', 'stenbacka'],
+                    # key_on='feature.properties.MPIO_CCNCT',
+                    # fill_color='Reds_r', 
+                    # fill_opacity=0.9, 
+                    # line_opacity=0.9,
+                    # legend_name='Stenbacka',
+                    # #bins=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+                    # smooth_factor=0).add_to(colombia_map)
+                # # Adicionar nombres del departamento
+                # style_function = "font-size: 15px; font-weight: bold"
+                # choropleth.geojson.add_child(
+                    # folium.features.GeoJsonTooltip(['MPIO_CCNCT'], style=style_function, labels=False))
+                # folium.LayerControl().add_to(colombia_map)
+
+                # #Adicionar valores 
+                # style_function = lambda x: {'fillColor': '#ffffff', 
+                                            # 'color':'#000000', 
+                                            # 'fillOpacity': 0.1, 
+                                            # 'weight': 0.1}
+                # highlight_function = lambda x: {'fillColor': '#000000', 
+                                                # 'color':'#000000', 
+                                                # 'fillOpacity': 0.50, 
+                                                # 'weight': 0.1}
+                # NIL = folium.features.GeoJson(
+                    # data = municipios_df,
+                    # style_function=style_function, 
+                    # control=False,
+                    # highlight_function=highlight_function, 
+                    # tooltip=folium.features.GeoJsonTooltip(
+                        # fields=['codigo_y','stenbacka'],
+                        # aliases=['Nombre-ID Municipio','Stenbacka'],
+                        # style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    # )
+                # )
+                # colombia_map.add_child(NIL)
+                # colombia_map.keep_in_front(NIL)
+                # col1, col2 ,col3= st.columns([1.5,4,1])
+                # with col2:
+                    # folium_static(colombia_map,width=480) 
+                
+                
             if select_variable == "Líneas":
                 AgGrid(LingroupPart)
                 st.plotly_chart(fig2,use_container_width=True)
@@ -1266,7 +1342,7 @@ $$i = 1, 2, ..., n$$
             select_variable = st.selectbox('Variable',['Tráfico','Líneas']) 
             
         DEPARTAMENTOSTRAF=sorted(Trafdpto.departamento.unique().tolist())
-        DEPARTAMETNOSLIN=sorted(Lindpto.departamento.unique().tolist())
+        DEPARTAMENTOSLIN=sorted(Lindpto.departamento.unique().tolist())
         with col2:
             DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSTRAF,5)
         PERIODOSTRAF=Trafdpto[Trafdpto['departamento']==DPTO]['periodo'].unique().tolist()
@@ -1275,7 +1351,7 @@ $$i = 1, 2, ..., n$$
     ##Cálculo de los indicadores
     
         if select_indicador == 'Stenbacka':
-            gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)            
+            gamma=st.slider('Seleccionar valor gamma',0.0,1.0,0.1)   
         
             for periodo in PERIODOSTRAF:
                 prTr=Trafdpto[(Trafdpto['departamento']==DPTO)&(Trafdpto['periodo']==periodo)]
@@ -1299,9 +1375,134 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Tráfico":
                 AgGrid(TrafgroupPart)
                 st.plotly_chart(fig1,use_container_width=True)
+                st.markdown('#### Visualización departamental del Stenbacka')
+                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSTRAF,len(PERIODOSTRAF)-1)
+                dfMap=[];
+                for departamento in DEPARTAMENTOSTRAF:
+                    if Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prTr2=Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)]
+                        prTr2.insert(5,'participacion',Participacion(prTr2,'trafico'))
+                        prTr2.insert(6,'stenbacka',Stenbacka(prTr2,'trafico',gamma))
+                        StenDpto=prTr2.groupby(['id_departamento','departamento'])['stenbacka'].mean().reset_index()
+                        dfMap.append(StenDpto) 
+                StenMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                
+                departamentos_df=gdf.merge(StenMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'stenbacka'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds_r', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Stenbacka',
+                    bins=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','stenbacka'],
+                        aliases=['ID Departamento','Departamento','Stenbacka'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480) 
+                
             if select_variable == "Líneas":
                 AgGrid(LingroupPart)
                 st.plotly_chart(fig2,use_container_width=True)     
+
+                st.markdown('#### Visualización departamental del Stenbacka')
+                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSLIN,len(PERIODOSLIN)-1)
+                dfMap=[];
+                for departamento in DEPARTAMENTOSLIN:
+                    if Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)].empty==True:
+                        pass
+                    else:                    
+                        prLi2=Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)]
+                        prLi2.insert(5,'participacion',Participacion(prLi2,'lineas'))
+                        prLi2.insert(6,'stenbacka',Stenbacka(prLi2,'lineas',gamma))
+                        StenDpto=prLi2.groupby(['id_departamento','departamento'])['stenbacka'].mean().reset_index()
+                        dfMap.append(StenDpto) 
+                StenMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(StenMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'stenbacka'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds_r', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Stenbacka',
+                    bins=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','stenbacka'],
+                        aliases=['ID Departamento','Departamento','Stenbacka'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480) 
         
         if select_indicador =='Concentración':
             dflistTraf=[];dflistIng=[];dflistLin=[]
@@ -1352,9 +1553,133 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Tráfico":
                 AgGrid(TrafgroupPart3)
                 st.plotly_chart(fig5,use_container_width=True)
+                st.markdown('#### Visualización departamental del IHH')
+                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSTRAF,len(PERIODOSTRAF)-1)
+                dfMap=[];
+                for departamento in DEPARTAMENTOSTRAF:
+                    if Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prTr2=Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)]
+                        prTr2.insert(3,'participacion',Participacion(prTr2,'trafico'))
+                        prTr2.insert(4,'IHH',IHH(prTr2,'trafico'))
+                        IHHDpto=prTr2.groupby(['id_departamento','departamento'])['IHH'].mean().reset_index()
+                        dfMap.append(IHHDpto) 
+                IHHMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(IHHMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'IHH'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds_r', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='IHH',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','IHH'],
+                        aliases=['ID Departamento','Departamento','IHH'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480) 
+              
             if select_variable == "Líneas":
                 AgGrid(LingroupPart3)
                 st.plotly_chart(fig6,use_container_width=True)    
+                st.markdown('#### Visualización departamental del IHH')
+                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSTRAF,len(PERIODOSTRAF)-1)
+                dfMap=[];
+                for departamento in DEPARTAMENTOSTRAF:
+                    if Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prLi2=Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)]
+                        prLi2.insert(3,'participacion',Participacion(prLi2,'lineas'))
+                        prLi2.insert(4,'IHH',IHH(prLi2,'lineas'))
+                        IHHDpto=prLi2.groupby(['id_departamento','departamento'])['IHH'].mean().reset_index()
+                        dfMap.append(IHHDpto) 
+                IHHMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(IHHMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'IHH'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds_r', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='IHH',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','IHH'],
+                        aliases=['ID Departamento','Departamento','IHH'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480)                 
+                
                             
         if select_indicador == 'Linda':
             dflistTraf2=[];dflistLin2=[];datosTraf=[];datosLin=[];nempresaTraf=[];nempresaLin=[];       
@@ -2213,7 +2538,6 @@ $$i = 1, 2, ..., n$$
         
         
         DEPARTAMENTOSACC=sorted(AccdptoIntRes.departamento.unique().tolist())
-        #DEPARTAMENTOSACC.remove('COLOMBIA')
     
         with col2:
             DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOSACC)
@@ -2247,9 +2571,130 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Accesos-corporativo":
                 AgGrid(AccgroupPartCorp)
                 st.plotly_chart(fig1a,use_container_width=True)
+                st.markdown('#### Visualización departamental del Stenbacka')
+                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSACC,len(PERIODOSACC)-1)
+                dfMap=[];                
+                for departamento in DEPARTAMENTOSACC:
+                    if AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)]
+                        prAcCorp.insert(5,'participacion',Participacion(prAcCorp,'accesos'))
+                        prAcCorp.insert(6,'stenbacka',Stenbacka(prAcCorp,'accesos',gamma))
+                        StenDpto=prAcCorp.groupby(['id_departamento','departamento'])['stenbacka'].mean().reset_index()
+                        dfMap.append(StenDpto)                 
+                StenMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(StenMap, on='id_departamento')                
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'stenbacka'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds_r', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Stenbacka',
+                    #bins=[0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','stenbacka'],
+                        aliases=['ID Departamento','Departamento','Stenbacka'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480) 
+                                
             if select_variable == "Accesos-residencial":
                 AgGrid(AccgroupPartRes)
                 st.plotly_chart(fig1b,use_container_width=True)                
+                st.markdown('#### Visualización departamental del Stenbacka')
+                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSACCRES,len(PERIODOSACCRES)-1)
+                dfMap=[];                
+                for departamento in DEPARTAMENTOSACC:
+                    if AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prAcRes=AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)]
+                        prAcRes.insert(5,'participacion',Participacion(prAcRes,'accesos'))
+                        prAcRes.insert(6,'stenbacka',Stenbacka(prAcRes,'accesos',gamma))
+                        StenDpto=prAcRes.groupby(['id_departamento','departamento'])['stenbacka'].mean().reset_index()
+                        dfMap.append(StenDpto)                 
+                StenMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(StenMap, on='id_departamento')                
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'stenbacka'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds_r', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Stenbacka',
+                    #bins=[0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','stenbacka'],
+                        aliases=['ID Departamento','Departamento','Stenbacka'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480) 
 
         if select_indicador =='Concentración':
             dflistAccCorp=[];dflistAccRes=[];
@@ -2301,10 +2746,133 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Accesos-corporativo":
                 AgGrid(AccgroupPartCorp3)
                 st.plotly_chart(fig5a,use_container_width=True)
+                st.markdown('#### Visualización departamental del IHH')
+                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSACC,len(PERIODOSACC)-1)
+                dfMap=[];
+                for departamento in DEPARTAMENTOSACC:
+                    if AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)]
+                        prAcCorp.insert(3,'participacion',Participacion(prAcCorp,'accesos'))
+                        prAcCorp.insert(4,'IHH',IHH(prAcCorp,'accesos'))
+                        IHHDpto=prAcCorp.groupby(['id_departamento','departamento'])['IHH'].mean().reset_index()
+                        dfMap.append(IHHDpto) 
+                IHHMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(IHHMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'IHH'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='IHH',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','IHH'],
+                        aliases=['ID Departamento','Departamento','IHH'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480)
+                
             if select_variable == "Accesos-residencial":
                 AgGrid(AccgroupPartRes3)
-                st.plotly_chart(fig5b,use_container_width=True)                
+                st.plotly_chart(fig5b,use_container_width=True)    
+                st.markdown('#### Visualización departamental del IHH')
+                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSACCRES,len(PERIODOSACCRES)-1)
+                dfMap=[];
+                for departamento in DEPARTAMENTOSACC:
+                    if AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prAcRes=AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)]
+                        prAcRes.insert(3,'participacion',Participacion(prAcRes,'accesos'))
+                        prAcRes.insert(4,'IHH',IHH(prAcRes,'accesos'))
+                        IHHDpto=prAcRes.groupby(['id_departamento','departamento'])['IHH'].mean().reset_index()
+                        dfMap.append(IHHDpto) 
+                IHHMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(IHHMap, on='id_departamento')
 
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'IHH'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='IHH',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','IHH'],
+                        aliases=['ID Departamento','Departamento','IHH'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480)
+                
         if select_indicador == 'Linda':
             dflistAccCorp2=[];datosAccCorp=[];nempresaAccCorp=[]; dflistAccRes2=[];datosAccRes=[];nempresaAccRes=[];       
             for periodo in PERIODOSACC:              
@@ -2396,7 +2964,7 @@ $$i = 1, 2, ..., n$$
                                 
                 dfMapCorp=[];
                 for departamento in DEPARTAMENTOSACC:
-                    prAcCorp=AccesosIntCorp[(AccesosIntCorp['departamento']==departamento)&(AccesosIntCorp['periodo']==periodoME)]
+                    prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)]
                     prAcCorp.insert(4,'media entropica',MediaEntropica(prAcCorp,'accesos')[0])
                     prAcCorp2=prAcCorp.groupby(['id_departamento','departamento'])['media entropica'].mean().reset_index()
                     dfMapCorp.append(prAcCorp2)
@@ -3086,7 +3654,69 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Suscriptores":
                 AgGrid(SusgroupPart)
                 st.plotly_chart(fig1,use_container_width=True)
+                st.markdown('#### Visualización departamental del Stenbacka')
+                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSSUS,len(PERIODOSSUS)-1)
+                dfMap=[];
+                for departamento in DEPARTAMENTOSSUS:
+                    if SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prSus2=SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)]
+                        prSus2.insert(5,'participacion',Participacion(prSus2,'suscriptores'))
+                        prSus2.insert(6,'stenbacka',Stenbacka(prSus2,'suscriptores',gamma))
+                        StenDpto=prSus2.groupby(['id_departamento','departamento'])['stenbacka'].mean().reset_index()
+                        dfMap.append(StenDpto) 
+                StenMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                
+                departamentos_df=gdf.merge(StenMap, on='id_departamento')
 
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'stenbacka'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds_r', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Stenbacka',
+                    #bins=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','stenbacka'],
+                        aliases=['ID Departamento','Departamento','Stenbacka'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480)                
+                
         if select_indicador =='Concentración':
             dflistSus=[];
 
@@ -3118,7 +3748,68 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Suscriptores":
                 AgGrid(SusgroupPart3)
                 st.plotly_chart(fig5,use_container_width=True)
+                st.markdown('#### Visualización departamental del IHH')
+                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSSUS,len(PERIODOSSUS)-1)
+                dfMap=[];
+                for departamento in DEPARTAMENTOSSUS:
+                    if SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prSus=SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)]
+                        prSus.insert(3,'participacion',Participacion(prSus,'suscriptores'))
+                        prSus.insert(4,'IHH',IHH(prSus,'suscriptores'))
+                        IHHDpto=prSus.groupby(['id_departamento','departamento'])['IHH'].mean().reset_index()
+                        dfMap.append(IHHDpto) 
+                IHHMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(IHHMap, on='id_departamento')
 
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'IHH'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Reds', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='IHH',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','IHH'],
+                        aliases=['ID Departamento','Departamento','IHH'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480)
+                
         if select_indicador == 'Linda':
             dflistSus2=[];datosSus=[];nempresaSus=[];       
             for periodo in PERIODOSSUS:              
