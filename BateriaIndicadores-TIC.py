@@ -209,6 +209,22 @@ def PlotlyIHH(df):
         layer="below", line_width=0,row=1, col=1,annotation_text="Concentrado",annotation_position="bottom left")
     return fig    
 
+def PlotlyPenetracion(df):
+    fig = make_subplots(rows=1,cols=1)
+    fig.add_trace(go.Bar(x=df['periodo'], y=df['penetracion'],
+                         hovertemplate =
+        '<br><b>Periodo</b>: %{x}<br>'+                         
+        '<br><b>Penetración</b>: %{y:.4f}<br>',name=''))
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
+    fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Penetración", row=1, col=1)
+    fig.update_layout(height=550,title="<b> Índice de penetración</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
+    fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
+    fig.update_traces(marker_color='rgb(0,153,153)', marker_line_color='rgb(32,32,32)',
+                      marker_line_width=1.5, opacity=0.4)
+    return fig    
+
 def PlotlyMEntropica(df):
     fig = make_subplots(rows=1, cols=1)
     fig.add_trace(go.Bar(x=df['periodo'],
@@ -654,7 +670,13 @@ def ReadApiINTFAccesosRes():
     INTF_ACCESOS.sum_accesos = INTF_ACCESOS.sum_accesos.astype('int64')
     INTF_ACCESOS = INTF_ACCESOS.rename(columns={'sum_accesos':'accesos'})
     return INTF_ACCESOS
-    
+ 
+##NUMERO DE HOGARES
+Hogares=pd.read_csv("https://raw.githubusercontent.com/sbermudezf/ComisionRegulacionComunicaciones/main/HOGARES.csv",delimiter=';')
+Hogares.columns=[x.lower() for x in Hogares.columns]
+Hogares.id_municipio=Hogares.id_municipio.astype(str)
+Hogares.id_departamento=Hogares.id_departamento.astype(str)
+Hogares.anno=Hogares.anno.astype('str')
     
 if select_mercado == 'Telefonía local':   
     #st.markdown(r"""<h1 id="logotel"><span class="material-icons material-icons-two-tone" style="font-size:36px">local_phone</span> <span>Telefonía local</span></h1>""",unsafe_allow_html=True) 
@@ -694,7 +716,7 @@ if select_mercado == 'Telefonía local':
     
     if select_dimension == 'Nacional':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
     ## Información sobre los indicadores
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -765,6 +787,10 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Moderada        | $0,20 - 0,50$ |
 | Concentrada     | $>0,50 - 1$   |
 | Alta            | $>1$          |""",unsafe_allow_html=True)        
+        if select_indicador == 'Penetración':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")
+
     
         st.write('#### Agregación nacional') 
         select_variable = st.selectbox('Variable',['Tráfico', 'Ingresos','Líneas']) 
@@ -907,10 +933,26 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 fig12=PlotlyLinda(LindLin)
                 st.write(LindLin.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconLin[lind-1]]))
                 st.plotly_chart(fig12,use_container_width=True)                
+
+        if select_indicador == 'Penetración':
+            HogaresNac=Hogares.groupby(['anno'])['hogares'].sum()  
+            LinNac=Lineas.groupby(['periodo'])['lineas'].sum().reset_index()
+            LinNac.insert(0,'anno',LinNac.periodo.str.split('-',expand=True)[0])
+            PenetracionNac=LinNac.merge(HogaresNac, on=['anno'], how='left')
+            PenetracionNac.insert(4,'penetracion',PenetracionNac['lineas']/PenetracionNac['hogares'])
+            PenetracionNac.penetracion=PenetracionNac.penetracion.round(3)
+            if select_variable=='Líneas':
+                fig12=PlotlyPenetracion(PenetracionNac)
+                AgGrid(PenetracionNac[['periodo','lineas','hogares','penetracion']])
+                st.plotly_chart(fig12,use_container_width=True)
+            if select_variable=='Tráfico':
+                st.write("El indicador de penetración sólo está definido para la variable de Líneas.")
+            if select_variable=='Ingresos':
+                st.write("El indicador de penetración sólo está definido para la variable de Líneas.")   
                             
     if select_dimension == 'Municipal':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
     ## Información sobre los indicadores                                
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -981,6 +1023,10 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Moderada        | $0,20 - 0,50$ |
 | Concentrada     | $>0,50 - 1$   |
 | Alta            | $>1$          |""",unsafe_allow_html=True) 
+        if select_indicador == 'Penetración':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")
+
         
         st.write('#### Desagregación municipal')
         col1, col2 = st.columns(2)
@@ -1200,10 +1246,32 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                     with st.expander("Mostrar datos"):
                         st.write(dLin)
                     st.plotly_chart(fig11,use_container_width=True)
+
+        if select_indicador == 'Penetración':
+            HogaresMuni=Hogares.groupby(['anno','id_municipio'])['hogares'].sum().reset_index()  
+            LinMuni=Linmuni[(Linmuni['codigo']==MUNI)]
+            LinMuni=LinMuni.groupby(['periodo','codigo'])[['lineas']].sum().reset_index()
+            LinMuni.insert(0,'anno',LinMuni.periodo.str.split('-',expand=True)[0])
+            LinMuni.insert(2,'id_municipio',LinMuni.codigo.str.split('-',expand=True)[1])
+            HogaresMuni.id_municipio=HogaresMuni.id_municipio.astype('int64')
+            HogaresMuni.anno=HogaresMuni.anno.astype('int64')
+            LinMuni.id_municipio=LinMuni.id_municipio.astype('int64')
+            LinMuni.anno=LinMuni.anno.astype('int64')
+            PenetracionMuni=LinMuni.merge(HogaresMuni, on=['anno','id_municipio'], how='left')
+            PenetracionMuni.insert(6,'penetracion',PenetracionMuni['lineas']/PenetracionMuni['hogares'])
+            PenetracionMuni.penetracion=PenetracionMuni.penetracion.round(3)
+            if select_variable=='Líneas':
+                fig12=PlotlyPenetracion(PenetracionMuni)
+                AgGrid(PenetracionMuni[['periodo','codigo','lineas','hogares','penetracion']])
+                st.plotly_chart(fig12,use_container_width=True)
+            if select_variable=='Tráfico':
+                st.write("El indicador de penetración sólo está definido para la variable de Líneas.")
+            if select_variable=='Ingresos':
+                st.write("El indicador de penetración sólo está definido para la variable de Líneas.")                
                               
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración'])
     ## Información sobre los indicadores    
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -1334,6 +1402,9 @@ $$S_{i} = \sum_{j=1}^{p} S_{ij};$$
 $$i = 1, 2, ..., n$$
 
                 """)
+        if select_indicador == 'Penetración':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")
                 
                 
         st.write('#### Agregación departamental') 
@@ -1678,8 +1749,7 @@ $$i = 1, 2, ..., n$$
                 colombia_map.keep_in_front(NIL)
                 col1, col2 ,col3= st.columns([1.5,4,1])
                 with col2:
-                    folium_static(colombia_map,width=480)                 
-                
+                    folium_static(colombia_map,width=480)                                 
                             
         if select_indicador == 'Linda':
             dflistTraf2=[];dflistLin2=[];datosTraf=[];datosLin=[];nempresaTraf=[];nempresaLin=[];       
@@ -1909,6 +1979,26 @@ $$i = 1, 2, ..., n$$
                     st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)
                     st.plotly_chart(fig10,use_container_width=True)                
 
+        if select_indicador == 'Penetración':
+            HogaresDpto=Hogares.groupby(['anno','id_departamento'])['hogares'].sum().reset_index()  
+            LineasDpto=Lindpto[(Lindpto['departamento']==DPTO)]
+            LineasDpto=LineasDpto.groupby(['periodo','id_departamento','departamento'])[['lineas']].sum().reset_index()
+            LineasDpto.insert(0,'anno',LineasDpto.periodo.str.split('-',expand=True)[0])
+            HogaresDpto.id_departamento=HogaresDpto.id_departamento.astype('int64')
+            HogaresDpto.anno=HogaresDpto.anno.astype('int64')
+            LineasDpto.id_departamento=LineasDpto.id_departamento.astype('int64')
+            LineasDpto.anno=LineasDpto.anno.astype('int64')
+            PenetracionDpto=LineasDpto.merge(HogaresDpto, on=['anno','id_departamento'], how='left')
+            PenetracionDpto.insert(6,'penetracion',PenetracionDpto['lineas']/PenetracionDpto['hogares'])
+            PenetracionDpto.penetracion=PenetracionDpto.penetracion.round(3)
+            if select_variable=='Líneas':
+                fig12=PlotlyPenetracion(PenetracionDpto)
+                AgGrid(PenetracionDpto[['periodo','departamento','lineas','hogares','penetracion']])
+                st.plotly_chart(fig12,use_container_width=True)
+            if select_variable=='Tráfico':
+                st.write("El indicador de penetración sólo está definido para la variable de Líneas.")
+            if select_variable=='Ingresos':
+                st.write("El indicador de penetración sólo está definido para la variable de Líneas.")  
              
 if select_mercado == "Internet fijo":
     st.title('Internet fijo') 
@@ -1917,6 +2007,7 @@ if select_mercado == "Internet fijo":
     IngresosInt=ReadApiINTFIng()
     
     AccesosIntCorp['periodo']=AccesosIntCorp['anno']+'-T'+AccesosIntCorp['trimestre']
+    AccesosIntCorp.municipio=AccesosIntCorp.municipio.replace({'MARIQUITA - SAN SEBASTIÁN DE MARIQUITA':'SAN SEBASTIÁN DE MARIQUITA'})
     AccesosIntRes['periodo']=AccesosIntRes['anno']+'-T'+AccesosIntRes['trimestre']
     IngresosInt['periodo']=IngresosInt['anno']+'-T'+IngresosInt['trimestre']
 
@@ -1948,7 +2039,7 @@ if select_mercado == "Internet fijo":
     
     if select_dimension == 'Nacional':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
     ## Información sobre los indicadores
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -2019,6 +2110,10 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Moderada        | $0,20 - 0,50$ |
 | Concentrada     | $>0,50 - 1$   |
 | Alta            | $>1$          |""",unsafe_allow_html=True)        
+        if select_indicador == 'Penetración':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")
+
     
         st.write('#### Agregación nacional') 
         select_variable = st.selectbox('Variable',['Accesos-corporativo','Accesos-residencial','Ingresos']) 
@@ -2170,10 +2265,24 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 fig11=PlotlyLinda(LindIng)
                 st.write(LindIng.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconIng[lind-1]]))
                 st.plotly_chart(fig11,use_container_width=True)
+
+        if select_indicador == 'Penetración':
+            HogaresNac=Hogares.groupby(['anno'])['hogares'].sum()  
+            AccNac=AccesosIntRes.groupby(['periodo'])['accesos'].sum().reset_index()
+            AccNac.insert(0,'anno',AccNac.periodo.str.split('-',expand=True)[0])
+            PenetracionNac=AccNac.merge(HogaresNac, on=['anno'], how='left')
+            PenetracionNac.insert(4,'penetracion',PenetracionNac['accesos']/PenetracionNac['hogares'])
+            PenetracionNac.penetracion=PenetracionNac.penetracion.round(3)
+            if select_variable=='Accesos-residencial':
+                fig12=PlotlyPenetracion(PenetracionNac)
+                AgGrid(PenetracionNac[['periodo','accesos','hogares','penetracion']])
+                st.plotly_chart(fig12,use_container_width=True)
+            if select_variable=='Accesos-corporativo':
+                st.write("El indicador de penetración sólo está definido para la variable de Accesos-residencial.")
   
     if select_dimension == 'Municipal':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
     ## Información sobre los indicadores                                
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -2244,6 +2353,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Moderada        | $0,20 - 0,50$ |
 | Concentrada     | $>0,50 - 1$   |
 | Alta            | $>1$          |""",unsafe_allow_html=True) 
+        if select_indicador == 'Penetración':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")
 
         st.write('#### Desagregación municipal')
         col1, col2 = st.columns(2)
@@ -2396,10 +2508,30 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                     with st.expander("Mostrar datos"):
                         AgGrid(dAccRes)                    
                     st.plotly_chart(fig10b,use_container_width=True) 
-                    
+
+        if select_indicador == 'Penetración':
+            HogaresMuni=Hogares.groupby(['anno','id_municipio'])['hogares'].sum().reset_index()  
+            AccMuni=AccmuniIntRes[(AccmuniIntRes['codigo']==MUNI)]
+            AccMuni=AccMuni.groupby(['periodo','codigo'])[['accesos']].sum().reset_index()
+            AccMuni.insert(0,'anno',AccMuni.periodo.str.split('-',expand=True)[0])
+            AccMuni.insert(2,'id_municipio',AccMuni.codigo.str.split('-',expand=True)[1])
+            HogaresMuni.id_municipio=HogaresMuni.id_municipio.astype('int64')
+            HogaresMuni.anno=HogaresMuni.anno.astype('int64')
+            AccMuni.id_municipio=AccMuni.id_municipio.astype('int64')
+            AccMuni.anno=AccMuni.anno.astype('int64')
+            PenetracionMuni=AccMuni.merge(HogaresMuni, on=['anno','id_municipio'], how='left')
+            PenetracionMuni.insert(6,'penetracion',PenetracionMuni['accesos']/PenetracionMuni['hogares'])
+            PenetracionMuni.penetracion=PenetracionMuni.penetracion.round(3)
+            if select_variable=='Accesos-residencial':
+                fig12=PlotlyPenetracion(PenetracionMuni)
+                AgGrid(PenetracionMuni[['periodo','codigo','accesos','hogares','penetracion']])
+                st.plotly_chart(fig12,use_container_width=True)
+            if select_variable=='Accesos-corporativo':
+                st.write("El indicador de penetración sólo está definido para la variable de Accesos-residencial.")
+                
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración'])
     ## Información sobre los indicadores    
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -2530,6 +2662,10 @@ $$S_{i} = \sum_{j=1}^{p} S_{ij};$$
 $$i = 1, 2, ..., n$$
 
                 """)
+        if select_indicador == 'Penetración':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")
+                
                                 
         st.write('#### Agregación departamental') 
         col1, col2 = st.columns(2)
@@ -2572,7 +2708,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(AccgroupPartCorp)
                 st.plotly_chart(fig1a,use_container_width=True)
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSACC,len(PERIODOSACC)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSACC)
                 dfMap=[];                
                 for departamento in DEPARTAMENTOSACC:
                     if AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)].empty==True:
@@ -3110,6 +3246,24 @@ $$i = 1, 2, ..., n$$
                     st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)                
                     st.plotly_chart(fig9b,use_container_width=True)
 
+        if select_indicador == 'Penetración':
+            HogaresDpto=Hogares.groupby(['anno','id_departamento'])['hogares'].sum().reset_index()  
+            AccDpto=AccdptoIntRes[(AccdptoIntRes['departamento']==DPTO)]
+            AccDpto=AccDpto.groupby(['periodo','id_departamento','departamento'])[['accesos']].sum().reset_index()
+            AccDpto.insert(0,'anno',AccDpto.periodo.str.split('-',expand=True)[0])
+            HogaresDpto.id_departamento=HogaresDpto.id_departamento.astype('int64')
+            HogaresDpto.anno=HogaresDpto.anno.astype('int64')
+            AccDpto.id_departamento=AccDpto.id_departamento.astype('int64')
+            AccDpto.anno=AccDpto.anno.astype('int64')
+            PenetracionDpto=AccDpto.merge(HogaresDpto, on=['anno','id_departamento'], how='left')
+            PenetracionDpto.insert(6,'penetracion',PenetracionDpto['accesos']/PenetracionDpto['hogares'])
+            PenetracionDpto.penetracion=PenetracionDpto.penetracion.round(3)
+            if select_variable=='Accesos-residencial':
+                fig12=PlotlyPenetracion(PenetracionDpto)
+                AgGrid(PenetracionDpto[['periodo','departamento','accesos','hogares','penetracion']])
+                st.plotly_chart(fig12,use_container_width=True)
+            if select_variable=='Accesos-corporativo':
+                st.write("El indicador de penetración sólo está definido para la variable de Accesos-residencial.")
                    
 if select_mercado == "Televisión por suscripción":
     st.title("Televisión por suscripción") 
@@ -3141,7 +3295,7 @@ if select_mercado == "Televisión por suscripción":
     
     if select_dimension == 'Nacional':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
     ## Información sobre los indicadores
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -3212,6 +3366,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Moderada        | $0,20 - 0,50$ |
 | Concentrada     | $>0,50 - 1$   |
 | Alta            | $>1$          |""",unsafe_allow_html=True)        
+        if select_indicador == 'Penetración':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")
     
         st.write('#### Agregación nacional') 
         select_variable = st.selectbox('Variable',['Suscriptores','Ingresos']) 
@@ -3322,10 +3479,25 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 fig11=PlotlyLinda(LindIng)
                 st.write(LindIng.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconIng[lind-1]]))
                 st.plotly_chart(fig11,use_container_width=True)
+
+        if select_indicador == 'Penetración':
+            HogaresNac=Hogares.groupby(['anno'])['hogares'].sum()  
+            SusNac=SuscriptoresTV.groupby(['periodo'])['suscriptores'].sum().reset_index()
+            SusNac.insert(0,'anno',SusNac.periodo.str.split('-',expand=True)[0])
+            PenetracionNac=SusNac.merge(HogaresNac, on=['anno'], how='left')
+            PenetracionNac.insert(4,'penetracion',PenetracionNac['suscriptores']/PenetracionNac['hogares'])
+            PenetracionNac.penetracion=PenetracionNac.penetracion.round(3)
+            if select_variable=='Suscriptores':
+                fig12=PlotlyPenetracion(PenetracionNac)
+                AgGrid(PenetracionNac[['periodo','suscriptores','hogares','penetracion']])
+                st.plotly_chart(fig12,use_container_width=True)
+
+            if select_variable=='Ingresos':
+                st.write("El indicador de penetración sólo está definido para la variable de Líneas.") 
             
     if select_dimension == 'Municipal':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
     ## Información sobre los indicadores                                
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -3396,6 +3568,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Moderada        | $0,20 - 0,50$ |
 | Concentrada     | $>0,50 - 1$   |
 | Alta            | $>1$          |""",unsafe_allow_html=True) 
+        if select_indicador == 'Penetración':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")
 
         st.write('#### Desagregación municipal')
         col1, col2 = st.columns(2)
@@ -3488,10 +3663,28 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                     with st.expander("Mostrar datos"):
                         AgGrid(dSus)                    
                     st.plotly_chart(fig10,use_container_width=True) 
+
+        if select_indicador == 'Penetración':
+            HogaresMuni=Hogares.groupby(['anno','id_municipio'])['hogares'].sum().reset_index()  
+            SusMuni=SusmuniTV[(SusmuniTV['codigo']==MUNI)]
+            SusMuni=SusMuni.groupby(['periodo','codigo'])[['suscriptores']].sum().reset_index()
+            SusMuni.insert(0,'anno',SusMuni.periodo.str.split('-',expand=True)[0])
+            SusMuni.insert(2,'id_municipio',SusMuni.codigo.str.split('-',expand=True)[1])
+            HogaresMuni.id_municipio=HogaresMuni.id_municipio.astype('int64')
+            HogaresMuni.anno=HogaresMuni.anno.astype('int64')
+            SusMuni.id_municipio=SusMuni.id_municipio.astype('int64')
+            SusMuni.anno=SusMuni.anno.astype('int64')
+            PenetracionMuni=SusMuni.merge(HogaresMuni, on=['anno','id_municipio'], how='left')
+            PenetracionMuni.insert(6,'penetracion',PenetracionMuni['suscriptores']/PenetracionMuni['hogares'])
+            PenetracionMuni.penetracion=PenetracionMuni.penetracion.round(3)
+            if select_variable=='Suscriptores':
+                fig12=PlotlyPenetracion(PenetracionMuni)
+                AgGrid(PenetracionMuni[['periodo','codigo','suscriptores','hogares','penetracion']])
+                st.plotly_chart(fig12,use_container_width=True)
                     
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración'])
     ## Información sobre los indicadores    
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -3622,7 +3815,10 @@ $$S_{i} = \sum_{j=1}^{p} S_{ij};$$
 $$i = 1, 2, ..., n$$
 
                 """)
-                                
+        if select_indicador == 'Penetración':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")
+                                                
         st.write('#### Agregación departamental') 
         col1, col2 = st.columns(2)
         with col1:
@@ -3932,6 +4128,23 @@ $$i = 1, 2, ..., n$$
                     st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)                
                     st.plotly_chart(fig9,use_container_width=True)
 
+        if select_indicador == 'Penetración':
+            HogaresDpto=Hogares.groupby(['anno','id_departamento'])['hogares'].sum().reset_index()  
+            SusDpto=SusdptoTV[(SusdptoTV['departamento']==DPTO)]
+            SusDpto=SusDpto.groupby(['periodo','id_departamento','departamento'])[['suscriptores']].sum().reset_index()
+            SusDpto.insert(0,'anno',SusDpto.periodo.str.split('-',expand=True)[0])
+            HogaresDpto.id_departamento=HogaresDpto.id_departamento.astype('int64')
+            HogaresDpto.anno=HogaresDpto.anno.astype('int64')
+            SusDpto.id_departamento=SusDpto.id_departamento.astype('int64')
+            SusDpto.anno=SusDpto.anno.astype('int64')
+            PenetracionDpto=SusDpto.merge(HogaresDpto, on=['anno','id_departamento'], how='left')
+            PenetracionDpto.insert(6,'penetracion',PenetracionDpto['suscriptores']/PenetracionDpto['hogares'])
+            PenetracionDpto.penetracion=PenetracionDpto.penetracion.round(3)
+            if select_variable=='Suscriptores':
+                fig12=PlotlyPenetracion(PenetracionDpto)
+                AgGrid(PenetracionDpto[['periodo','departamento','suscriptores','hogares','penetracion']])
+                st.plotly_chart(fig12,use_container_width=True)
+
    
 if select_mercado == 'Telefonía móvil':   
     st.title('Telefonía móvil') 
@@ -4166,7 +4379,6 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             fig12=PlotlyLinda(LindAbo)
             st.write(LindAbo.reset_index(drop=True).style.apply(f, axis=0, subset=[LindconAbo[lind-1]]))
             st.plotly_chart(fig12,use_container_width=True)                           
-
 
 if select_mercado == 'Internet móvil':
     st.title('Internet móvil') 
