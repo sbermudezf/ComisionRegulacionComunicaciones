@@ -265,7 +265,7 @@ def PlotlyLinda(df):
     fig.update_layout(height=550,title="<b> Índice de Linda por periodo</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
     fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)',type="log", tickvals=[0.5,0.7,0.8,0.9,1.0,1.5,2.0,3.0,5.0,10,50,100,250,500,750,1000])
+    fig.update_yaxes(showgrid=True, gridwidth=1,range=[0,flatten(df.iloc[:, [lind-1]].values)],gridcolor='rgba(220, 220, 220, 0.4)',type="linear",rangemode="tozero")
     fig.update_traces(marker_color='rgb(127,0,255)', marker_line_color='rgb(51,0,102)',
                   marker_line_width=1.5, opacity=0.4)
     return fig
@@ -279,7 +279,7 @@ def PlotlyLinda2(df):
     fig.update_layout(height=550,title="<b> Índice de Linda por periodo</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
     fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)',type="log", tickvals=[0.5,0.7,0.8,0.9,1.0,1.5,2.0,3.0,5.0,10,50,100,250,500,750,1000])
+    fig.update_yaxes(showgrid=True, gridwidth=1, range=[0,flatten(df.iloc[:, [lind-1]].values)],gridcolor='rgba(220, 220, 220, 0.4)',type="linear",rangemode="tozero")
     fig.update_traces(marker_color='rgb(127,0,255)', marker_line_color='rgb(51,0,102)',
                   marker_line_width=1.5, opacity=0.4)        
     return fig                
