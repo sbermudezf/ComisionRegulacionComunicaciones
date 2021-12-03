@@ -1911,7 +1911,7 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 
             if select_dimension == 'Departamental':            
                 st.write('#### Desagregación departamental') 
-                select_indicador = st.sidebar.selectbox('Indicador',['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
+                select_indicador = st.sidebar.selectbox('Indicador',['Stenbacka', 'Concentración','IHH','Linda','Penetración','Media entrópica'])
                 DEPARTAMENTOS=sorted(PaquetesdptoIng.id_departamento.unique().tolist())
                 DPTO=st.selectbox('Escoja el departamento', DEPARTAMENTOS)
                 PERIODOSDPTO=['2020-T3','2020-T4','2021-T1','2021-T2']
@@ -1986,6 +1986,66 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Moderada        | $0,20 - 0,50$ |
 | Concentrada     | $>0,50 - 1$   |
 | Alta            | $>1$          |""",unsafe_allow_html=True)
+                if select_indicador == 'Media entrópica':
+                    st.write("### Media entrópica")
+                    st.write(r"""La media entrópica es un índice que tiene los mismos límites superiores e inferiores del IHH/10000 (1/n a 1), donde n es el número de empresas en el mercado. El valor mayor de este índice es 1 y corresponde a una situación de monopolio. En el intermedio el índice tomará valores inferiores al IHH/10000 pero no muy distantes.""")
+                    with st.expander("Cálculo detallado de la media entrópica"):
+                        st.write(r""" Para un mercado dividido en submercados, la media entrópica se descompone en tres términos múltiplicativos:
+-   **Concentración dentro del submercado:** donde cada submercado trendrá su cálculo de la media entrópica. Este factor, para el mercado en conjunto, tomará valores entre 0 y 1 que representa la concentración dentro del submercado en el conjunto del mercado.
+
+-   **Concentración entre los submercados:** donde cada submercado tendrá su cuota de participación en el mercado total. Para el mercado en conjunto, este factor tomará valores entre 1/n y 1, siendo cercano a 1 en la medida que hayan pocos submercados, en relación al total, con una cuota de participación mayor en el mercado.
+
+-   **Componente de interacción:** Este factor tomará valores mayores que 1. En cada submercado su valor crecerá exponencialmente en la medida que se trate de mercados pequeños atendidos en buena parte por una o pocas empresas grandes en el mercado total. Los valores más altos de este factor para el mercado total puden interpretarse como alertas para hacer un mayor seguimiento a los submercados correspondientes.             
+
+La media entrópica se descompone en tres terminos multiplicativos que resultan de aplicar su definición (ME) a la descomposición del índice de Theil (EI).En el cual, el índice de Theil (Theil, 1967), se representa como la suma de las participaciones del mercado multiplicada cada una por el logaritmo natural de su inverso:
+
+$$IE = \sum_{i=1}^{n} S_{i} ln\frac{1}{S_{i}}$$
+
+**Donde:**
+
+-   $S_{i}$ corresponde a la participación de cada una de las empresas del mercado.
+
+Y por su parte, la media entrópica parte del exponencial del índice de entrópia de Theil ($e^{IE}$), que de acuerdo con Taagepera y Grofman (1981) corresponde a un número efectivo de empresas comparable con el número de empresas equivalentes que se obtienen como el inverso del índice IHH (10000/IHH). Para finalmente, hayar su cálculo a través del inverso del número efectivo de Taagepera y Grofman ($e^{-IE}$) de la siguiente manera:
+
+$$ME = e_{-IE} = \prod_{i=1}^{n} S_{i}^{\frac{S_{i}}{n_{i}}}$$
+
+La media entrópica, al contrario del índice IE, pero en la misma dirección del índice IHH, aumenta cuando crece la concentración, lo cual facilita su interpretación. El límite superior del IE (mínima concentración) es un valor que depende del número de competidores (ln(n); donde n es el número de competidores), mientras que los índices ME e IHH/10000 siempre producen un valor entre cero y uno, correspondiendo para ambos la mínima concentración a 1/n cuando hay n competidores, y tomando ambos el valor de uno (1) para un mercado monopólico (máxima concentración).
+
+#### Descomposición multiplicativa de la media entrópica
+
+La descomposición multiplicativa de la media entrópica se haya de la siguiente manera:
+
+$$ME = ME_{D} * ME_{E} * ME_{I}$$
+
+**Donde:**
+
+-   $ME_{D}$ corresponde al componente de concentración dentro del submercado:
+
+$$ME_{D} = \prod_{j=1}^{p} ME_{D,j}^{w_{j}};$$
+$$ME_{D,j} = \prod_{i \in C_{j}}(\frac{S_{ij}}{n_{i}w_{j}})^{(\frac{S_{ij}}{w_{j}})}$$
+
+-   $ME_{E}$ corresponde al componente de concentración entre los submercados:
+
+$$ME_{E} = \prod_{j=1}^{p} W_{j}^{w_{j}}$$
+
+-   $ME_{I}$ corresponde al componente de interacción:
+
+$$ME_{I} = \prod_{j=1}^{p} ME_{I,j}^{w_{j}};$$
+$$ME_{I,j} = \prod_{i \in C_{j}}^{n} (\frac{S_{i}}{S_{ij}})^{(\frac{S_{ij}}{w_{j}})}$$
+
+***Donde a su vez de manera general:***
+
+-   $w_{j}$ es:
+
+$$w_{j} = \sum_{i=1}^{n} S_{ij};$$
+$$j = 1, 2, ..., p$$
+
+-   $S_{i}$ es:
+
+$$S_{i} = \sum_{j=1}^{p} S_{ij};$$
+$$i = 1, 2, ..., n$$
+
+                """)
                 if select_indicador == 'Penetración':
                     st.write("### Índice de penetración")
                     st.markdown("El índice de penetración es usado para...")    
@@ -2278,6 +2338,99 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                         st.plotly_chart(fig12,use_container_width=True)
                     if select_variable=='Ingresos':
                         st.write("El indicador de penetración sólo está definido para la variable de Líneas.")  
+
+                if select_indicador == 'Media entrópica':
+
+                    for periodo in PERIODOS:
+                        prEn=PaquetesEnv[(PaquetesEnv['periodo']==periodo)&(PaquetesEnv['id_departamento']==DPTO)]
+                        prEn.insert(4,'media entropica',MediaEntropica(prEn,'numero_total_envios')[0])
+                        dfEnvios.append(prEn)
+                    EnvgroupPart=pd.concat(dfEnvios)
+                    MEDIAENTROPICAENV=EnvgroupPart.groupby(['periodo'])['media entropica'].mean().reset_index()         
+                                       
+                    fig7=PlotlyMEntropica(MEDIAENTROPICAENV)
+                    
+                    if select_variable == "Envíos":
+                        periodoME=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOS,len(PERIODOS)-1)
+                        if PaquetesEnv[(PaquetesEnv['id_departamento']==DPTO)&(PaquetesEnv['periodo']==periodoME)].empty==True:
+                            pass
+                        else:    
+                            MEperiodTableEnv=MediaEntropica(PaquetesEnv[(PaquetesEnv['id_departamento']==DPTO)&(PaquetesEnv['periodo']==periodoME)],'numero_total_envios')[1] 
+                        st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
+                        st.plotly_chart(fig7,use_container_width=True)
+                        dfMap=[];
+                        for departamento in DEPARTAMENTOS:
+                            if PaquetesEnv[(PaquetesEnv['id_departamento']==departamento)&(PaquetesEnv['periodo']==periodoME)].empty==True:
+                                pass
+                            else:    
+                                prEn=PaquetesEnv[(PaquetesEnv['id_departamento']==departamento)&(PaquetesEnv['periodo']==periodoME)]
+                                prEn.insert(4,'media entropica',MediaEntropica(prEn,'numero_total_envios')[0])
+                                prEn2=prEn.groupby(['id_departamento'])['media entropica'].mean().reset_index()
+                                dfMap.append(prEn2)
+                        EnvMap=pd.concat(dfMap).reset_index().drop('index',axis=1)
+                        colsME=['SIJ','SI','WJ','MED','MEE','MEI','Media entropica'] 
+                        st.write(MEperiodTableEnv.reset_index(drop=True).style.apply(f, axis=0, subset=colsME))
+                        departamentos_df=gdf.merge(EnvMap, on='id_departamento')
+                        departamentos_df['media entropica']=departamentos_df['media entropica'].round(4)
+                        colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                        tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                        for tile in tiles:
+                            folium.TileLayer(tile).add_to(colombia_map)
+                        choropleth=folium.Choropleth(
+                            geo_data=Colombian_DPTO,
+                            data=departamentos_df,
+                            columns=['id_departamento', 'media entropica'],
+                            key_on='feature.properties.DPTO',
+                            fill_color='Greens', 
+                            fill_opacity=0.9, 
+                            line_opacity=0.9,
+                            legend_name='Media entrópica',
+                            #bins=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+                            smooth_factor=0).add_to(colombia_map)
+                        # Adicionar nombres del departamento
+                        style_function = "font-size: 15px; font-weight: bold"
+                        choropleth.geojson.add_child(
+                            folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                        folium.LayerControl().add_to(colombia_map)
+
+                        #Adicionar valores velocidad
+                        style_function = lambda x: {'fillColor': '#ffffff', 
+                                                    'color':'#000000', 
+                                                    'fillOpacity': 0.1, 
+                                                    'weight': 0.1}
+                        highlight_function = lambda x: {'fillColor': '#000000', 
+                                                        'color':'#000000', 
+                                                        'fillOpacity': 0.50, 
+                                                        'weight': 0.1}
+                        NIL = folium.features.GeoJson(
+                            data = departamentos_df,
+                            style_function=style_function, 
+                            control=False,
+                            highlight_function=highlight_function, 
+                            tooltip=folium.features.GeoJsonTooltip(
+                                fields=['id_departamento','departamento','media entropica'],
+                                aliases=['ID Departamento','Departamento','Media entrópica'],
+                                style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                            )
+                        )
+                        colombia_map.add_child(NIL)
+                        colombia_map.keep_in_front(NIL)
+                        MunicipiosME=MEperiodTableEnv.groupby(['id_municipio'])['WJ'].mean().reset_index()
+                        MunicipiosME=MunicipiosME[MunicipiosME.WJ!=0]
+                        MunicipiosME.WJ=MunicipiosME.WJ.round(7)
+                        
+                        
+                        fig9=PlotlyMentropicaTorta(MunicipiosME)
+                        
+                        col1, col2= st.columns(2)
+                        with col1:
+                            st.write(r"""###### <center>Visualización de la media entrópica en todos los departamentos y en el periodo seleccionado</center>""",unsafe_allow_html=True)
+                            folium_static(colombia_map,width=480)    
+                        with col2:
+                            st.write(r"""###### <center>Visualización de la participación de los municipios dentro del departamento seleccionado</center>""",unsafe_allow_html=True)                
+                            st.plotly_chart(fig9,use_container_width=True)
+
+
  
     if select_envio== 'Masivo':
         Masivo=nacional[nacional['tipo_envio']=='Envíos Masivos']
