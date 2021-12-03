@@ -1427,9 +1427,12 @@ $$i = 1, 2, ..., n$$
             Paquetes.drop(['anno','trimestre','id_tipo_envio','tipo_envio','id_tipo_objeto','id_ambito'],axis=1, inplace=True)
             with st.expander('Datos paquetes'):
                 AgGrid(Paquetes)
-            PESO = st.select_slider('Seleccione rango de peso',Paquetes.rango_peso_envio.unique().tolist())   
+            #PESO = st.select_slider('Seleccione rango de peso',Paquetes.rango_peso_envio.unique().tolist())
+            PESO2 = st.multiselect('Seleccione los rangos de peso a agrupar',Paquetes.rango_peso_envio.unique().tolist(),default=Paquetes.rango_peso_envio.unique().tolist())              
             PERIODOS=['2020-T3','2020-T4','2021-T1','2021-T2']            
-            PaquetesPeso=Paquetes[Paquetes['rango_peso_envio']==PESO]
+            #PaquetesPeso=Paquetes[Paquetes['rango_peso_envio']==PESO]
+            PaquetesPeso=Paquetes[Paquetes['rango_peso_envio'].isin(PESO2)]
+            #st.write(Paquetes[Paquetes['rango_peso_envio'].isin(PESO2)])
             PaquetesnacIng=PaquetesPeso.groupby(['periodo','empresa','id_empresa'])['ingresos'].sum().reset_index()
             PaquetesnacEnv=PaquetesPeso.groupby(['periodo','empresa','id_empresa'])['numero_total_envios'].sum().reset_index()
             PaquetesmuniIng=PaquetesPeso.groupby(['periodo','empresa','id_empresa','codigo_municipio'])['ingresos'].sum().reset_index()
