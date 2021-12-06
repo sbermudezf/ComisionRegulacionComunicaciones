@@ -265,7 +265,7 @@ def PlotlyLinda(df):
     fig.update_layout(height=550,title="<b> Índice de Linda por periodo</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
     fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
-    fig.update_yaxes(showgrid=True, gridwidth=1,range=[0,flatten(df.iloc[:, [lind-1]].values)],gridcolor='rgba(220, 220, 220, 0.4)',type="linear",rangemode="tozero")
+    fig.update_yaxes(showgrid=True,gridwidth=1,range=[0,flatten(df.iloc[:, [lind-1]].values)],gridcolor='rgba(220, 220, 220, 0.4)',type="linear",rangemode="tozero")
     fig.update_traces(marker_color='rgb(127,0,255)', marker_line_color='rgb(51,0,102)',
                   marker_line_width=1.5, opacity=0.4)
     return fig
@@ -279,7 +279,7 @@ def PlotlyLinda2(df):
     fig.update_layout(height=550,title="<b> Índice de Linda por periodo</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
     fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
-    fig.update_yaxes(showgrid=True, gridwidth=1, range=[0,flatten(df.iloc[:, [lind-1]].values)],gridcolor='rgba(220, 220, 220, 0.4)',type="linear",rangemode="tozero")
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)',type="log", tickvals=[0.5,0.7,0.8,0.9,1.0,1.5,2.0,3.0,5.0,10,50,100,250,500,750,1000])
     fig.update_traces(marker_color='rgb(127,0,255)', marker_line_color='rgb(51,0,102)',
                   marker_line_width=1.5, opacity=0.4)        
     return fig                
@@ -1447,7 +1447,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(TrafgroupPart)
                 st.plotly_chart(fig1,use_container_width=True)
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSTRAF,len(PERIODOSTRAF)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSTRAF,'2021-T2')
                 dfMap=[];
                 for departamento in DEPARTAMENTOSTRAF:
                     if Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)].empty==True:
@@ -1514,7 +1514,7 @@ $$i = 1, 2, ..., n$$
                 st.plotly_chart(fig2,use_container_width=True)     
 
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSLIN,len(PERIODOSLIN)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSLIN,'2021-T2')
                 dfMap=[];
                 for departamento in DEPARTAMENTOSLIN:
                     if Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)].empty==True:
@@ -1625,7 +1625,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(TrafgroupPart3)
                 st.plotly_chart(fig5,use_container_width=True)
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSTRAF,len(PERIODOSTRAF)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSTRAF,'2021-T2')
                 dfMap=[];
                 for departamento in DEPARTAMENTOSTRAF:
                     if Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)].empty==True:
@@ -1690,7 +1690,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(LingroupPart3)
                 st.plotly_chart(fig6,use_container_width=True)    
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSTRAF,len(PERIODOSTRAF)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSTRAF,'2021-T2')
                 dfMap=[];
                 for departamento in DEPARTAMENTOSTRAF:
                     if Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)].empty==True:
@@ -1830,11 +1830,11 @@ $$i = 1, 2, ..., n$$
             fig8=PlotlyMEntropica(MEDIAENTROPICALIN)
 
             
-            if select_variable == "Tráfico":
-                periodoME=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOSTRAF,len(PERIODOSTRAF)-1)
-                MEperiodTableTraf=MediaEntropica(Trafico[(Trafico['departamento']==DPTO)&(Trafico['periodo']==periodoME)],'trafico')[1] 
+            if select_variable == "Tráfico": 
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig7,use_container_width=True)
+                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSTRAF,'2021-T2')
+                MEperiodTableTraf=MediaEntropica(Trafico[(Trafico['departamento']==DPTO)&(Trafico['periodo']==periodoME)],'trafico')[1]                
                 dfMap=[];
                 for departamento in DEPARTAMENTOSTRAF:
                     prTr=Trafico[(Trafico['departamento']==departamento)&(Trafico['periodo']==periodoME)]
@@ -1905,10 +1905,11 @@ $$i = 1, 2, ..., n$$
                     st.plotly_chart(fig9,use_container_width=True)
                 
             if select_variable == "Líneas":
-                periodoME2=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOSLIN,len(PERIODOSLIN)-1)
-                MEperiodTableLin=MediaEntropica(Lineas[(Lineas['departamento']==DPTO)&(Lineas['periodo']==periodoME2)],'lineas')[1] 
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig8,use_container_width=True)
+                periodoME2=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSLIN,'2021-T2')
+                MEperiodTableLin=MediaEntropica(Lineas[(Lineas['departamento']==DPTO)&(Lineas['periodo']==periodoME2)],'lineas')[1] 
+                
                 dfMap2=[];
                 for departamento in DEPARTAMENTOSTRAF:
                     prLi=Lineas[(Lineas['departamento']==departamento)&(Lineas['periodo']==periodoME2)]
@@ -1971,7 +1972,7 @@ $$i = 1, 2, ..., n$$
                 
                 fig10=PlotlyMentropicaTorta(MunicipiosME2)
                 
-                col1, col2 ,= st.columns2
+                col1, col2 ,= st.columns(2)
                 with col1:
                     st.write(r"""###### <center>Visualización de la media entrópica en todos los departamentos y en el periodo seleccionado</center>""",unsafe_allow_html=True)
                     folium_static(colombia_map2,width=480)
@@ -2708,7 +2709,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(AccgroupPartCorp)
                 st.plotly_chart(fig1a,use_container_width=True)
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSACC)
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSACC,'2021-T2')
                 dfMap=[];                
                 for departamento in DEPARTAMENTOSACC:
                     if AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)].empty==True:
@@ -2772,7 +2773,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(AccgroupPartRes)
                 st.plotly_chart(fig1b,use_container_width=True)                
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSACCRES,len(PERIODOSACCRES)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSACCRES,'2021-T2')
                 dfMap=[];                
                 for departamento in DEPARTAMENTOSACC:
                     if AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)].empty==True:
@@ -2883,7 +2884,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(AccgroupPartCorp3)
                 st.plotly_chart(fig5a,use_container_width=True)
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSACC,len(PERIODOSACC)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSACC,'2021-T2')
                 dfMap=[];
                 for departamento in DEPARTAMENTOSACC:
                     if AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)].empty==True:
@@ -2948,7 +2949,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(AccgroupPartRes3)
                 st.plotly_chart(fig5b,use_container_width=True)    
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSACCRES,len(PERIODOSACCRES)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSACCRES,'2021-T2')
                 dfMap=[];
                 for departamento in DEPARTAMENTOSACC:
                     if AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)].empty==True:
@@ -3093,11 +3094,10 @@ $$i = 1, 2, ..., n$$
             fig7b=PlotlyMEntropica(MEDIAENTROPICAACCRES)
             
             if select_variable == "Accesos-corporativo":
-                periodoME=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOSACC,len(PERIODOSACC)-1)
-                MEperiodTableAccCorp=MediaEntropica(AccesosIntCorp[(AccesosIntCorp['departamento']==DPTO)&(AccesosIntCorp['periodo']==periodoME)],'accesos')[1] 
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig7a,use_container_width=True)
-                                
+                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSACC,'2021-T2')
+                MEperiodTableAccCorp=MediaEntropica(AccesosIntCorp[(AccesosIntCorp['departamento']==DPTO)&(AccesosIntCorp['periodo']==periodoME)],'accesos')[1]                                 
                 dfMapCorp=[];
                 for departamento in DEPARTAMENTOSACC:
                     prAcCorp=AccesosIntCorp[(AccesosIntCorp['departamento']==departamento)&(AccesosIntCorp['periodo']==periodoME)]
@@ -3169,10 +3169,10 @@ $$i = 1, 2, ..., n$$
 
 
             if select_variable == "Accesos-residencial":
-                periodoME=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOSACCRES,len(PERIODOSACCRES)-1)
-                MEperiodTableAccRes=MediaEntropica(AccesosIntRes[(AccesosIntRes['departamento']==DPTO)&(AccesosIntRes['periodo']==periodoME)],'accesos')[1] 
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig7b,use_container_width=True)
+                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSACCRES,'2021-T2')
+                MEperiodTableAccRes=MediaEntropica(AccesosIntRes[(AccesosIntRes['departamento']==DPTO)&(AccesosIntRes['periodo']==periodoME)],'accesos')[1] 
                                 
                 dfMapRes=[];
                 for departamento in DEPARTAMENTOSACC:
@@ -3851,7 +3851,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(SusgroupPart)
                 st.plotly_chart(fig1,use_container_width=True)
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.selectbox('Escoja un periodo para calcular el Stenbacka', PERIODOSSUS,len(PERIODOSSUS)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSSUS,'2021-T2')
                 dfMap=[];
                 for departamento in DEPARTAMENTOSSUS:
                     if SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)].empty==True:
@@ -3945,7 +3945,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(SusgroupPart3)
                 st.plotly_chart(fig5,use_container_width=True)
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.selectbox('Escoja un periodo para calcular el IHH', PERIODOSSUS,len(PERIODOSSUS)-1)
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSSUS,'2021-T2')
                 dfMap=[];
                 for departamento in DEPARTAMENTOSSUS:
                     if SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)].empty==True:
@@ -4054,10 +4054,11 @@ $$i = 1, 2, ..., n$$
             fig7=PlotlyMEntropica(MEDIAENTROPICASUS)
             
             if select_variable == "Suscriptores":
-                periodoME=st.selectbox('Escoja un periodo para calcular la media entrópica', PERIODOSSUS,len(PERIODOSSUS)-1)
-                MEperiodTableSus=MediaEntropica(SuscriptoresTV[(SuscriptoresTV['departamento']==DPTO)&(SuscriptoresTV['periodo']==periodoME)],'suscriptores')[1] 
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
-                st.plotly_chart(fig7,use_container_width=True)                               
+                st.plotly_chart(fig7,use_container_width=True)      
+                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSSUS,'2021-T2')
+                MEperiodTableSus=MediaEntropica(SuscriptoresTV[(SuscriptoresTV['departamento']==DPTO)&(SuscriptoresTV['periodo']==periodoME)],'suscriptores')[1] 
+                
                 dfMap=[];
 
                 for departamento in DEPARTAMENTOSSUS:
@@ -4144,7 +4145,6 @@ $$i = 1, 2, ..., n$$
                 fig12=PlotlyPenetracion(PenetracionDpto)
                 AgGrid(PenetracionDpto[['periodo','departamento','suscriptores','hogares','penetracion']])
                 st.plotly_chart(fig12,use_container_width=True)
-
    
 if select_mercado == 'Telefonía móvil':   
     st.title('Telefonía móvil') 
