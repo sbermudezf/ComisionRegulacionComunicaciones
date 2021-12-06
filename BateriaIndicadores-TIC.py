@@ -132,7 +132,13 @@ def Linda(df,column,periodo):
     cols=[f'Linda ({i+1})' for i in range(1,len(Linda.columns))]
     cols.insert(0,'periodo')
     Linda.columns=cols    
-    return Linda    
+    return Linda 
+@st.cache
+def Dominancia(df,column):
+    part=(df[column]/df[column].sum())*100
+    IHH=round(sum([elem**2 for elem in part]),2)
+    dom=round(sum([elem**4/IHH**2 for elem in part]),3)
+    return dom    
 ##
 ##Definición funciones para graficar los indicadores:
 def PlotlyStenbacka(df):
@@ -190,7 +196,7 @@ def PlotlyIHH(df):
         '<br><b>Periodo</b>: %{x}<br>'+                         
         '<br><b>IHH</b>: %{y:.4f}<br>',name=''))
     fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
-    fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Concentración", row=1, col=1)
+    fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Índice de Herfindahl Hirschman", row=1, col=1)
     fig.update_layout(height=550,title="<b> Índice Herfindahl-Hirschman</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
     fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
@@ -207,6 +213,22 @@ def PlotlyIHH(df):
         y0=1501, y1=2499,
         fillcolor="rgb(0,0,102)", opacity=0.6,
         layer="below", line_width=0,row=1, col=1,annotation_text="Concentrado",annotation_position="bottom left")
+    return fig    
+
+def PlotlyDominancia(df):    
+    fig = make_subplots(rows=1,cols=1)
+    fig.add_trace(go.Bar(x=df['periodo'], y=df['Dominancia'],
+                         hovertemplate =
+        '<br><b>Periodo</b>: %{x}<br>'+                         
+        '<br><b>Dominancia</b>: %{y:.4f}<br>',name=''))
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
+    fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Dominancia", row=1, col=1)
+    fig.update_layout(height=550,title="<b> Índice Herfindahl-Hirschman</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
+    fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
+    fig.update_traces(marker_color='rgb(204,102,0)', marker_line_color='rgb(102,51,0)',
+                      marker_line_width=1.5, opacity=0.4)
     return fig    
 
 def PlotlyPenetracion(df):
@@ -711,12 +733,13 @@ if select_mercado == 'Telefonía local':
     dfTrafico=[];dfIngresos=[];dfLineas=[]
     dfTrafico2=[];dfIngresos2=[];dfLineas2=[]
     dfTrafico3=[];dfIngresos3=[];dfLineas3=[]
+    dfTrafico4=[];dfIngresos4=[];dfLineas4=[]
     
     select_dimension=st.sidebar.selectbox('Ámbito',['Departamental','Municipal','Nacional'])
     
     if select_dimension == 'Nacional':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración','Dominancia'])
     ## Información sobre los indicadores
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -790,6 +813,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
         if select_indicador == 'Penetración':
             st.write("### Índice de penetración")
             st.markdown("El índice de penetración es usado para...")
+        if select_indicador == 'Dominancia':
+            st.write("### Índice de dominancia")
+            st.markdown("El índice de dominancia es usado para...")
 
     
         st.write('#### Agregación nacional') 
@@ -816,6 +842,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             TrafgroupPart=pd.concat(dfTrafico)
             InggroupPart=pd.concat(dfIngresos)
             LingroupPart=pd.concat(dfLineas)
+            TrafgroupPart.participacion=TrafgroupPart.participacion.round(2)
+            InggroupPart.participacion=InggroupPart.participacion.round(2)
+            LingroupPart.participacion=LingroupPart.participacion.round(2)            
 
             #Gráficas
             fig1=PlotlyStenbacka(TrafgroupPart)
@@ -883,6 +912,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             TrafgroupPart3=pd.concat(dfTrafico3)
             InggroupPart3=pd.concat(dfIngresos3)
             LingroupPart3=pd.concat(dfLineas3)
+            TrafgroupPart3.participacion=TrafgroupPart3.participacion.round(2)
+            InggroupPart3.participacion=InggroupPart3.participacion.round(2)
+            LingroupPart3.participacion=LingroupPart3.participacion.round(2)            
             IHHTraf=TrafgroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
             IHHIng=InggroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
             IHHLin=LingroupPart3.groupby(['periodo'])['IHH'].mean().reset_index()
@@ -949,10 +981,56 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 st.write("El indicador de penetración sólo está definido para la variable de Líneas.")
             if select_variable=='Ingresos':
                 st.write("El indicador de penetración sólo está definido para la variable de Líneas.")   
+
+        if select_indicador == 'Dominancia':
+            PERIODOS=Trafnac['periodo'].unique().tolist()
+            for elem in PERIODOS:
+                prTr=Trafnac[Trafnac['periodo']==elem]
+                prTr.insert(3,'participacion',(prTr['trafico']/prTr['trafico'].sum())*100)
+                prTr.insert(4,'IHH',IHH(prTr,'trafico'))
+                prTr.insert(5,'Dominancia',Dominancia(prTr,'trafico'))
+                dfTrafico4.append(prTr.sort_values(by='participacion',ascending=False))
+                ##
+                prIn=Ingnac[Ingnac['periodo']==elem]
+                prIn.insert(3,'participacion',(prIn['ingresos']/prIn['ingresos'].sum())*100)
+                prIn.insert(4,'IHH',IHH(prIn,'ingresos'))
+                prIn.insert(5,'Dominancia',Dominancia(prIn,'ingresos'))
+                dfIngresos4.append(prIn.sort_values(by='participacion',ascending=False))
+                ##
+                prLi=Linnac[Linnac['periodo']==elem]
+                prLi.insert(3,'participacion',(prLi['lineas']/prLi['lineas'].sum())*100)
+                prLi.insert(4,'IHH',IHH(prLi,'lineas'))
+                prLi.insert(5,'Dominancia',Dominancia(prLi,'lineas'))
+                dfLineas4.append(prLi.sort_values(by='participacion',ascending=False))
+            TrafgroupPart4=pd.concat(dfTrafico4)
+            InggroupPart4=pd.concat(dfIngresos4)
+            LingroupPart4=pd.concat(dfLineas4)
+            TrafgroupPart4.participacion=TrafgroupPart4.participacion.round(2)
+            InggroupPart4.participacion=InggroupPart4.participacion.round(2)
+            LingroupPart4.participacion=LingroupPart4.participacion.round(2)
+            DomTraf=TrafgroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()
+            DomIng=InggroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()
+            DomLin=LingroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()
+            
+            ##Gráficas
+            
+            fig13 = PlotlyDominancia(DomTraf)   
+            fig14 = PlotlyDominancia(DomIng)
+            fig15 = PlotlyDominancia(DomLin)  
+            
+            if select_variable == "Tráfico":
+                AgGrid(TrafgroupPart4)
+                st.plotly_chart(fig13,use_container_width=True)
+            if select_variable == "Ingresos":
+                AgGrid(InggroupPart4)
+                st.plotly_chart(fig14,use_container_width=True)
+            if select_variable == "Líneas":
+                AgGrid(LingroupPart4)
+                st.plotly_chart(fig15,use_container_width=True)
                             
     if select_dimension == 'Municipal':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración','Dominancia'])
     ## Información sobre los indicadores                                
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -1026,6 +1104,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
         if select_indicador == 'Penetración':
             st.write("### Índice de penetración")
             st.markdown("El índice de penetración es usado para...")
+        if select_indicador == 'Dominancia':
+            st.write("### Índice de dominancia")
+            st.markdown("El índice de dominancia es usado para...")            
 
         
         st.write('#### Desagregación municipal')
@@ -1267,11 +1348,42 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             if select_variable=='Tráfico':
                 st.write("El indicador de penetración sólo está definido para la variable de Líneas.")
             if select_variable=='Ingresos':
-                st.write("El indicador de penetración sólo está definido para la variable de Líneas.")                
+                st.write("El indicador de penetración sólo está definido para la variable de Líneas.")    
+
+        if select_indicador == 'Dominancia':            
+            for periodo in PERIODOSTRAF:
+                prTr=Trafmuni[(Trafmuni['codigo']==MUNI)&(Trafmuni['periodo']==periodo)]
+                prLi=Linmuni[(Linmuni['codigo']==MUNI)&(Linmuni['periodo']==periodo)]
+                prTr.insert(3,'participacion',(prTr['trafico']/prTr['trafico'].sum())*100)
+                prTr.insert(4,'IHH',IHH(prTr,'trafico'))
+                prTr.insert(5,'Dominancia',Dominancia(prTr,'trafico'))
+                dfTrafico4.append(prTr.sort_values(by='participacion',ascending=False))
+                prLi.insert(3,'participacion',(prLi['lineas']/prLi['lineas'].sum())*100)
+                prLi.insert(4,'IHH',IHH(prLi,'lineas'))
+                prLi.insert(5,'Dominancia',Dominancia(prLi,'lineas'))
+                dfLineas4.append(prLi.sort_values(by='participacion',ascending=False))
+            TrafgroupPart4=pd.concat(dfTrafico4)
+            LingroupPart4=pd.concat(dfLineas4)
+            TrafgroupPart4.participacion=TrafgroupPart4.participacion.round(2)
+            LingroupPart4.participacion=LingroupPart4.participacion.round(2)
+            
+            DomTraf=TrafgroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()
+            DomLin=LingroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()    
+            
+            fig13=PlotlyDominancia(DomTraf)
+            fig14=PlotlyDominancia(DomLin)
+
+            if select_variable == "Tráfico":
+                st.write(TrafgroupPart4)
+                st.plotly_chart(fig13,use_container_width=True)
+            if select_variable == "Líneas":
+                st.write(LingroupPart4)
+                st.plotly_chart(fig14,use_container_width=True)  
+                
                               
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración','Dominancia'])
     ## Información sobre los indicadores    
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -1405,7 +1517,9 @@ $$i = 1, 2, ..., n$$
         if select_indicador == 'Penetración':
             st.write("### Índice de penetración")
             st.markdown("El índice de penetración es usado para...")
-                
+        if select_indicador == 'Dominancia':
+            st.write("### Índice de dominancia")
+            st.markdown("El índice de dominancia es usado para...")                
                 
         st.write('#### Agregación departamental') 
         col1, col2 = st.columns(2)
@@ -1447,7 +1561,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(TrafgroupPart)
                 st.plotly_chart(fig1,use_container_width=True)
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSTRAF,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSTRAF,PERIODOSTRAF[-1])
                 dfMap=[];
                 for departamento in DEPARTAMENTOSTRAF:
                     if Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)].empty==True:
@@ -1514,7 +1628,7 @@ $$i = 1, 2, ..., n$$
                 st.plotly_chart(fig2,use_container_width=True)     
 
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSLIN,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSLIN,PERIODOSLIN[-1])
                 dfMap=[];
                 for departamento in DEPARTAMENTOSLIN:
                     if Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)].empty==True:
@@ -1625,7 +1739,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(TrafgroupPart3)
                 st.plotly_chart(fig5,use_container_width=True)
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSTRAF,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSTRAF,PERIODOSTRAF[-1])
                 dfMap=[];
                 for departamento in DEPARTAMENTOSTRAF:
                     if Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)].empty==True:
@@ -1690,7 +1804,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(LingroupPart3)
                 st.plotly_chart(fig6,use_container_width=True)    
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSTRAF,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSLIN,PERIODOSLIN[-1])
                 dfMap=[];
                 for departamento in DEPARTAMENTOSTRAF:
                     if Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)].empty==True:
@@ -1833,7 +1947,7 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Tráfico": 
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig7,use_container_width=True)
-                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSTRAF,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSTRAF,PERIODOSTRAF[-1])
                 MEperiodTableTraf=MediaEntropica(Trafico[(Trafico['departamento']==DPTO)&(Trafico['periodo']==periodoME)],'trafico')[1]                
                 dfMap=[];
                 for departamento in DEPARTAMENTOSTRAF:
@@ -1907,7 +2021,7 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Líneas":
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig8,use_container_width=True)
-                periodoME2=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSLIN,'2021-T2')
+                periodoME2=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSLIN,PERIODOSLIN[-1])
                 MEperiodTableLin=MediaEntropica(Lineas[(Lineas['departamento']==DPTO)&(Lineas['periodo']==periodoME2)],'lineas')[1] 
                 
                 dfMap2=[];
@@ -2000,7 +2114,162 @@ $$i = 1, 2, ..., n$$
                 st.write("El indicador de penetración sólo está definido para la variable de Líneas.")
             if select_variable=='Ingresos':
                 st.write("El indicador de penetración sólo está definido para la variable de Líneas.")  
-             
+
+        if select_indicador == 'Dominancia':
+        
+            for periodo in PERIODOSTRAF:
+                prTr=Trafdpto[(Trafdpto['departamento']==DPTO)&(Trafdpto['periodo']==periodo)]
+                prLi=Lindpto[(Lindpto['departamento']==DPTO)&(Lindpto['periodo']==periodo)]
+                prTr.insert(3,'participacion',(prTr['trafico']/prTr['trafico'].sum())*100)
+                prTr.insert(4,'IHH',IHH(prTr,'trafico'))
+                prTr.insert(5,'Dominancia',Dominancia(prTr,'trafico'))
+                dfTrafico4.append(prTr.sort_values(by='participacion',ascending=False))
+                prLi.insert(3,'participacion',(prLi['lineas']/prLi['lineas'].sum())*100)
+                prLi.insert(4,'IHH',IHH(prLi,'lineas'))
+                prLi.insert(4,'Dominancia',Dominancia(prLi,'lineas'))
+                dfLineas4.append(prLi.sort_values(by='participacion',ascending=False))
+            TrafgroupPart4=pd.concat(dfTrafico4)
+            LingroupPart4=pd.concat(dfLineas4)
+            TrafgroupPart4.participacion=TrafgroupPart4.participacion.round(2)
+            LingroupPart4.participacion=LingroupPart4.participacion.round(2)
+            DomTraf=TrafgroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()
+            DomLin=LingroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()    
+            
+            fig13=PlotlyDominancia(DomTraf)
+            fig14=PlotlyDominancia(DomLin)
+
+            if select_variable == "Tráfico":
+                AgGrid(TrafgroupPart4)
+                st.plotly_chart(fig13,use_container_width=True)
+                st.markdown('#### Visualización departamental de la dominancia')
+                periodoME=st.select_slider('Escoja un periodo para calcular la dominancia', PERIODOSTRAF,PERIODOSTRAF[-1])
+                dfMap=[];
+                for departamento in DEPARTAMENTOSTRAF:
+                    if Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prTr2=Trafdpto[(Trafdpto['departamento']==departamento)&(Trafdpto['periodo']==periodoME)]
+                        prTr2.insert(3,'participacion',Participacion(prTr2,'trafico'))
+                        prTr2.insert(4,'IHH',IHH(prTr2,'trafico'))
+                        prTr2.insert(5,'Dominancia',Dominancia(prTr2,'trafico'))
+                        DomDpto=prTr2.groupby(['id_departamento','departamento'])['Dominancia'].mean().reset_index()
+                        dfMap.append(DomDpto) 
+                DomMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(DomMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'Dominancia'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Oranges', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Dominancia',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','Dominancia'],
+                        aliases=['ID Departamento','Departamento','Dominancia'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480) 
+              
+            if select_variable == "Líneas":
+                AgGrid(LingroupPart4)
+                st.plotly_chart(fig14,use_container_width=True)    
+                st.markdown('#### Visualización departamental de la dominancia')
+                periodoME=st.select_slider('Escoja un periodo para calcular la dominancia', PERIODOSlIN,PERIODOSLIN[-1])
+                dfMap=[];
+                for departamento in DEPARTAMENTOSTRAF:
+                    if Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prLi2=Lindpto[(Lindpto['departamento']==departamento)&(Lindpto['periodo']==periodoME)]
+                        prLi2.insert(3,'participacion',Participacion(prLi2,'lineas'))
+                        prLi2.insert(4,'IHH',IHH(prLi2,'lineas'))
+                        prLi2.insert(5,'Dominancia',Dominancia(prLi2,'lineas'))
+                        DomDpto=prLi2.groupby(['id_departamento','departamento'])['Dominancia'].mean().reset_index()
+                        dfMap.append(DomDpto) 
+                DomMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(DomMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'Dominancia'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Oranges', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Dominancia',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','Dominancia'],
+                        aliases=['ID Departamento','Departamento','Dominancia'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480)                                 
+                                         
 if select_mercado == "Internet fijo":
     st.title('Internet fijo') 
     AccesosIntCorp=ReadApiINTFAccesosCorp()
@@ -2035,12 +2304,13 @@ if select_mercado == "Internet fijo":
     dfAccesosCorp=[];dfAccesosRes=[];dfIngresos=[];
     dfAccesosCorp2=[];dfAccesosRes2=[];dfIngresos2=[];
     dfAccesosCorp3=[];dfAccesosRes3=[];dfIngresos3=[];
+    dfAccesosCorp4=[];dfAccesosRes4=[];dfIngresos4=[];
 
     select_dimension=st.sidebar.selectbox('Ámbito',['Departamental','Municipal','Nacional'])
     
     if select_dimension == 'Nacional':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración','Dominancia'])
     ## Información sobre los indicadores
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -2114,7 +2384,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
         if select_indicador == 'Penetración':
             st.write("### Índice de penetración")
             st.markdown("El índice de penetración es usado para...")
-
+        if select_indicador == 'Dominancia':
+            st.write("### Índice de dominancia")
+            st.markdown("El índice de dominancia es usado para...")
     
         st.write('#### Agregación nacional') 
         select_variable = st.selectbox('Variable',['Accesos-corporativo','Accesos-residencial','Ingresos']) 
@@ -2280,10 +2552,60 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 st.plotly_chart(fig12,use_container_width=True)
             if select_variable=='Accesos-corporativo':
                 st.write("El indicador de penetración sólo está definido para la variable de Accesos-residencial.")
+
+        if select_indicador == 'Dominancia':
+            PERIODOS=AccnacIntCorp['periodo'].unique().tolist()
+            for elem in PERIODOS:
+                prAccCorp=AccnacIntCorp[AccnacIntCorp['periodo']==elem]
+                prAccCorp.insert(3,'participacion',(prAccCorp['accesos']/prAccCorp['accesos'].sum())*100)
+                prAccCorp.insert(4,'IHH',IHH(prAccCorp,'accesos'))
+                prAccCorp.insert(5,'Dominancia',Dominancia(prAccCorp,'accesos'))
+                dfAccesosCorp4.append(prAccCorp.sort_values(by='participacion',ascending=False))
+                ##
+                prAccRes=AccnacIntRes[AccnacIntRes['periodo']==elem]
+                prAccRes.insert(3,'participacion',(prAccRes['accesos']/prAccRes['accesos'].sum())*100)
+                prAccRes.insert(4,'IHH',IHH(prAccRes,'accesos'))
+                prAccRes.insert(5,'Dominancia',Dominancia(prAccRes,'accesos'))
+                dfAccesosRes4.append(prAccRes.sort_values(by='participacion',ascending=False))
+                ##                
+                prIn=IngnacInt[IngnacInt['periodo']==elem]
+                prIn.insert(3,'participacion',(prIn['ingresos']/prIn['ingresos'].sum())*100)
+                prIn.insert(4,'IHH',IHH(prIn,'ingresos'))
+                prIn.insert(5,'Dominancia',Dominancia(prIn,'ingresos'))
+                dfIngresos4.append(prIn.sort_values(by='participacion',ascending=False))
+                ##
+
+            AccgroupPartCorp4=pd.concat(dfAccesosCorp4)
+            AccgroupPartRes4=pd.concat(dfAccesosRes4)
+            InggroupPart4=pd.concat(dfIngresos4)
+            
+            AccgroupPartCorp4.participacion=AccgroupPartCorp4.participacion.round(2)
+            AccgroupPartRes4.participacion=AccgroupPartRes4.participacion.round(2)
+            InggroupPart4.participacion=InggroupPart4.participacion.round(2)
+            
+            DomAccCorp=AccgroupPartCorp4.groupby(['periodo'])['Dominancia'].mean().reset_index()
+            DomAccRes=AccgroupPartRes4.groupby(['periodo'])['Dominancia'].mean().reset_index()
+            DomIng=InggroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()
+            
+            ##Gráficas
+            
+            fig13 = PlotlyDominancia(DomAccCorp)
+            fig14 = PlotlyDominancia(DomAccRes)            
+            fig15 = PlotlyDominancia(DomIng)  
+            
+            if select_variable == "Accesos-corporativo":
+                AgGrid(AccgroupPartCorp4)
+                st.plotly_chart(fig13,use_container_width=True)                
+            if select_variable == "Accesos-residencial":
+                AgGrid(AccgroupPartRes4)
+                st.plotly_chart(fig14,use_container_width=True)                
+            if select_variable == "Ingresos":
+                AgGrid(InggroupPart4)
+                st.plotly_chart(fig15,use_container_width=True)
   
     if select_dimension == 'Municipal':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración','Dominancia'])
     ## Información sobre los indicadores                                
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -2357,6 +2679,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
         if select_indicador == 'Penetración':
             st.write("### Índice de penetración")
             st.markdown("El índice de penetración es usado para...")
+        if select_indicador == 'Dominancia':
+            st.write("### Índice de penetración")
+            st.markdown("El índice de penetración es usado para...")            
 
         st.write('#### Desagregación municipal')
         col1, col2 = st.columns(2)
@@ -2529,10 +2854,38 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 st.plotly_chart(fig12,use_container_width=True)
             if select_variable=='Accesos-corporativo':
                 st.write("El indicador de penetración sólo está definido para la variable de Accesos-residencial.")
+
+        if select_indicador == 'Dominancia':            
+            for periodo in PERIODOSACC:
+                prAcCorp=AccmuniIntCorp[(AccmuniIntCorp['codigo']==MUNI)&(AccmuniIntCorp['periodo']==periodo)]
+                prAcCorp.insert(3,'participacion',(prAcCorp['accesos']/prAcCorp['accesos'].sum())*100)
+                prAcCorp.insert(4,'IHH',IHH(prAcCorp,'accesos'))
+                prAcCorp.insert(5,'Dominancia',Dominancia(prAcCorp,'accesos'))
+                dfAccesosCorp4.append(prAcCorp.sort_values(by='participacion',ascending=False))
+                prAcRes=AccmuniIntRes[(AccmuniIntRes['codigo']==MUNI)&(AccmuniIntRes['periodo']==periodo)]
+                prAcRes.insert(3,'participacion',(prAcRes['accesos']/prAcRes['accesos'].sum())*100)
+                prAcRes.insert(4,'IHH',IHH(prAcRes,'accesos'))
+                prAcRes.insert(5,'Dominancia',Dominancia(prAcRes,'accesos'))
+                dfAccesosRes4.append(prAcRes.sort_values(by='participacion',ascending=False))                    
+
+            AccgroupPartCorp4=pd.concat(dfAccesosCorp4)
+            DomAccCorp=AccgroupPartCorp4.groupby(['periodo'])['Dominancia'].mean().reset_index() 
+            AccgroupPartRes4=pd.concat(dfAccesosRes4)
+            DomAccRes=AccgroupPartRes4.groupby(['periodo'])['Dominancia'].mean().reset_index()             
+            
+            fig13=PlotlyDominancia(DomAccCorp)
+            fig14=PlotlyDominancia(DomAccRes)
+
+            if select_variable == "Accesos-corporativo":
+                AgGrid(AccgroupPartCorp4)
+                st.plotly_chart(fig13,use_container_width=True)
+            if select_variable == "Accesos-residencial":
+                AgGrid(AccgroupPartRes4)
+                st.plotly_chart(fig14,use_container_width=True)            
                 
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración','Dominancia'])
     ## Información sobre los indicadores    
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -2666,7 +3019,9 @@ $$i = 1, 2, ..., n$$
         if select_indicador == 'Penetración':
             st.write("### Índice de penetración")
             st.markdown("El índice de penetración es usado para...")
-                
+        if select_indicador == 'Dominancia':
+            st.write("### Índice de dominancia")
+            st.markdown("El índice de dominancia es usado para...")                
                                 
         st.write('#### Agregación departamental') 
         col1, col2 = st.columns(2)
@@ -2709,7 +3064,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(AccgroupPartCorp)
                 st.plotly_chart(fig1a,use_container_width=True)
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSACC,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSACC,PERIODOSACC[-1])
                 dfMap=[];                
                 for departamento in DEPARTAMENTOSACC:
                     if AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)].empty==True:
@@ -2773,7 +3128,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(AccgroupPartRes)
                 st.plotly_chart(fig1b,use_container_width=True)                
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSACCRES,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSACCRES,PERIODOSACCRES[-1])
                 dfMap=[];                
                 for departamento in DEPARTAMENTOSACC:
                     if AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)].empty==True:
@@ -2884,7 +3239,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(AccgroupPartCorp3)
                 st.plotly_chart(fig5a,use_container_width=True)
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSACC,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSACC,PERIODOSACC[-1])
                 dfMap=[];
                 for departamento in DEPARTAMENTOSACC:
                     if AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)].empty==True:
@@ -2949,7 +3304,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(AccgroupPartRes3)
                 st.plotly_chart(fig5b,use_container_width=True)    
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSACCRES,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSACCRES,PERIODOSACCRES[-1])
                 dfMap=[];
                 for departamento in DEPARTAMENTOSACC:
                     if AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)].empty==True:
@@ -3096,7 +3451,7 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Accesos-corporativo":
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig7a,use_container_width=True)
-                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSACC,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSACC,PERIODOSACC[-1])
                 MEperiodTableAccCorp=MediaEntropica(AccesosIntCorp[(AccesosIntCorp['departamento']==DPTO)&(AccesosIntCorp['periodo']==periodoME)],'accesos')[1]                                 
                 dfMapCorp=[];
                 for departamento in DEPARTAMENTOSACC:
@@ -3171,7 +3526,7 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Accesos-residencial":
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig7b,use_container_width=True)
-                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSACCRES,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSACCRES,PERIODOSACCRES[-1])
                 MEperiodTableAccRes=MediaEntropica(AccesosIntRes[(AccesosIntRes['departamento']==DPTO)&(AccesosIntRes['periodo']==periodoME)],'accesos')[1] 
                                 
                 dfMapRes=[];
@@ -3264,7 +3619,161 @@ $$i = 1, 2, ..., n$$
                 st.plotly_chart(fig12,use_container_width=True)
             if select_variable=='Accesos-corporativo':
                 st.write("El indicador de penetración sólo está definido para la variable de Accesos-residencial.")
-                   
+                
+        if select_indicador == 'Dominancia':
+            
+            for periodo in PERIODOSACC:
+                prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==DPTO)&(AccdptoIntCorp['periodo']==periodo)]
+                prAcCorp.insert(3,'participacion',(prAcCorp['accesos']/prAcCorp['accesos'].sum())*100)
+                prAcCorp.insert(4,'IHH',IHH(prAcCorp,'accesos'))
+                prAcCorp.insert(5,'Dominancia',Dominancia(prAcCorp,'accesos'))
+                dfAccesosCorp4.append(prAcCorp.sort_values(by='participacion',ascending=False))
+                prAcRes=AccdptoIntRes[(AccdptoIntRes['departamento']==DPTO)&(AccdptoIntRes['periodo']==periodo)]
+                prAcRes.insert(3,'participacion',(prAcRes['accesos']/prAcRes['accesos'].sum())*100)
+                prAcRes.insert(4,'IHH',IHH(prAcRes,'accesos'))
+                prAcRes.insert(5,'Dominancia',Dominancia(prAcRes,'accesos'))
+                dfAccesosRes4.append(prAcRes.sort_values(by='participacion',ascending=False))
+                
+            AccgroupPartCorp4=pd.concat(dfAccesosCorp4)
+            AccgroupPartRes4=pd.concat(dfAccesosRes4)
+            DomAccCorp=AccgroupPartCorp4.groupby(['periodo'])['Dominancia'].mean().reset_index()  
+            DomAccRes=AccgroupPartRes4.groupby(['periodo'])['Dominancia'].mean().reset_index()              
+            
+            fig13=PlotlyDominancia(DomAccCorp)
+            fig14=PlotlyDominancia(DomAccRes)
+
+            if select_variable == "Accesos-corporativo":
+                AgGrid(AccgroupPartCorp4)
+                st.plotly_chart(fig13,use_container_width=True)
+                st.markdown('#### Visualización departamental de la dominancia')
+                periodoME=st.select_slider('Escoja un periodo para calcular la dominancia', PERIODOSACC,PERIODOSACC[-1])
+                dfMap=[];
+                for departamento in DEPARTAMENTOSACC:
+                    if AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prAcCorp=AccdptoIntCorp[(AccdptoIntCorp['departamento']==departamento)&(AccdptoIntCorp['periodo']==periodoME)]
+                        prAcCorp.insert(3,'participacion',Participacion(prAcCorp,'accesos'))
+                        prAcCorp.insert(4,'IHH',IHH(prAcCorp,'accesos'))
+                        prAcCorp.insert(4,'Dominancia',Dominancia(prAcCorp,'accesos'))
+                        DomDpto=prAcCorp.groupby(['id_departamento','departamento'])['Dominancia'].mean().reset_index()
+                        dfMap.append(DomDpto) 
+                DomMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(DomMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'Dominancia'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Oranges', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Dominancia',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','Dominancia'],
+                        aliases=['ID Departamento','Departamento','Dominancia'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480)
+                
+            if select_variable == "Accesos-residencial":
+                AgGrid(AccgroupPartRes4)
+                st.plotly_chart(fig14,use_container_width=True)    
+                st.markdown('#### Visualización departamental de la dominancia')
+                periodoME=st.select_slider('Escoja un periodo para calcular la dominancia', PERIODOSACCRES,PERIODOSACCRES[-1])
+                dfMap=[];
+                for departamento in DEPARTAMENTOSACC:
+                    if AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prAcRes=AccdptoIntRes[(AccdptoIntRes['departamento']==departamento)&(AccdptoIntRes['periodo']==periodoME)]
+                        prAcRes.insert(3,'participacion',Participacion(prAcRes,'accesos'))
+                        prAcRes.insert(4,'IHH',IHH(prAcRes,'accesos'))
+                        prAcRes.insert(5,'Dominancia',Dominancia(prAcRes,'accesos'))
+                        DomDpto=prAcRes.groupby(['id_departamento','departamento'])['Dominancia'].mean().reset_index()
+                        dfMap.append(DomDpto) 
+                DomMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(DomMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'Dominancia'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Oranges', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Dominancia',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','Dominancia'],
+                        aliases=['ID Departamento','Departamento','Dominancia'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480)
+                                   
 if select_mercado == "Televisión por suscripción":
     st.title("Televisión por suscripción") 
     IngresosTV=ReadApiTVSUSIng() 
@@ -3290,12 +3799,14 @@ if select_mercado == "Televisión por suscripción":
     dfSuscriptores=[];dfIngresos=[];
     dfSuscriptores2=[];dfIngresos2=[];
     dfSuscriptores3=[];dfIngresos3=[];
+    dfSuscriptores4=[];dfIngresos4=[];
+    
 
     select_dimension=st.sidebar.selectbox('Ámbito',['Departamental','Municipal','Nacional'])     
     
     if select_dimension == 'Nacional':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración','Dominancia'])
     ## Información sobre los indicadores
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -3369,6 +3880,10 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
         if select_indicador == 'Penetración':
             st.write("### Índice de penetración")
             st.markdown("El índice de penetración es usado para...")
+        if select_indicador == 'Dominancia':
+            st.write("### Índice de dominancia")
+            st.markdown("El índice de dominancia es usado para...")
+
     
         st.write('#### Agregación nacional') 
         select_variable = st.selectbox('Variable',['Suscriptores','Ingresos']) 
@@ -3494,10 +4009,47 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 
             if select_variable=='Ingresos':
                 st.write("El indicador de penetración sólo está definido para la variable de Líneas.") 
+
+        if select_indicador == 'Dominancia':
+            PERIODOS=SusnacTV['periodo'].unique().tolist()
+            for elem in PERIODOS:
+                prSus=SusnacTV[SusnacTV['periodo']==elem]
+                prSus.insert(3,'participacion',(prSus['suscriptores']/prSus['suscriptores'].sum())*100)
+                prSus.insert(4,'IHH',IHH(prSus,'suscriptores'))
+                prSus.insert(5,'Dominancia',Dominancia(prSus,'suscriptores'))
+                dfSuscriptores4.append(prSus.sort_values(by='participacion',ascending=False))
+                ##
+                prIn=IngnacTV[IngnacTV['periodo']==elem]
+                prIn.insert(3,'participacion',(prIn['ingresos']/prIn['ingresos'].sum())*100)
+                prIn.insert(4,'IHH',IHH(prIn,'ingresos'))
+                prIn.insert(5,'Dominancia',Dominancia(prIn,'ingresos'))
+                dfIngresos4.append(prIn.sort_values(by='participacion',ascending=False))
+                ##
+
+            SusgroupPart4=pd.concat(dfSuscriptores4)
+            SusgroupPart4.participacion=SusgroupPart4.participacion.round(2)
+            InggroupPart4=pd.concat(dfIngresos4)
+            InggroupPart4.participacion=InggroupPart4.participacion.round(2)
+            
+            DomSus=SusgroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()
+            DomIng=InggroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()                
+            
+            ##Gráficas
+            
+            fig13 = PlotlyDominancia(DomSus)   
+            fig14 = PlotlyDominancia(DomIng)  
+            
+            if select_variable == "Suscriptores":
+                AgGrid(SusgroupPart4)
+                st.plotly_chart(fig13,use_container_width=True)
+            if select_variable == "Ingresos":
+                AgGrid(InggroupPart4)
+                st.plotly_chart(fig14,use_container_width=True)
+
             
     if select_dimension == 'Municipal':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Penetración','Dominancia'])
     ## Información sobre los indicadores                                
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -3571,6 +4123,9 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
         if select_indicador == 'Penetración':
             st.write("### Índice de penetración")
             st.markdown("El índice de penetración es usado para...")
+        if select_indicador == 'Dominancia':
+            st.write("### Índice de dominancia")
+            st.markdown("El índice de dominancia es usado para...")            
 
         st.write('#### Desagregación municipal')
         col1, col2 = st.columns(2)
@@ -3681,10 +4236,28 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                 fig12=PlotlyPenetracion(PenetracionMuni)
                 AgGrid(PenetracionMuni[['periodo','codigo','suscriptores','hogares','penetracion']])
                 st.plotly_chart(fig12,use_container_width=True)
-                    
+
+        if select_indicador == 'Dominancia':            
+            for periodo in PERIODOSSUS:
+                prSus=SusmuniTV[(SusmuniTV['codigo']==MUNI)&(SusmuniTV['periodo']==periodo)]
+                prSus.insert(3,'participacion',(prSus['suscriptores']/prSus['suscriptores'].sum())*100)
+                prSus.insert(4,'IHH',IHH(prSus,'suscriptores'))
+                prSus.insert(5,'Dominancia',Dominancia(prSus,'suscriptores'))
+                dfSuscriptores4.append(prSus.sort_values(by='participacion',ascending=False))
+
+            SusgroupPart4=pd.concat(dfSuscriptores4)
+            SusgroupPart4.participacion=SusgroupPart4.participacion.round(2)
+            DomSus=SusgroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()  
+            
+            fig13=PlotlyDominancia(DomSus)
+
+            if select_variable == "Suscriptores":
+                AgGrid(SusgroupPart4)
+                st.plotly_chart(fig13,use_container_width=True)               
+                                    
     if select_dimension == 'Departamental':
         select_indicador = st.sidebar.selectbox('Indicador',
-                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración'])
+                                    ['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración','Dominancia'])
     ## Información sobre los indicadores    
         if select_indicador == 'Stenbacka':
             st.write("### Índice de Stenbacka")
@@ -3818,6 +4391,9 @@ $$i = 1, 2, ..., n$$
         if select_indicador == 'Penetración':
             st.write("### Índice de penetración")
             st.markdown("El índice de penetración es usado para...")
+        if select_indicador == 'Dominancia':
+            st.write("### Índice de dominancia")
+            st.markdown("El índice de dominancia es usado para...")            
                                                 
         st.write('#### Agregación departamental') 
         col1, col2 = st.columns(2)
@@ -3851,7 +4427,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(SusgroupPart)
                 st.plotly_chart(fig1,use_container_width=True)
                 st.markdown('#### Visualización departamental del Stenbacka')
-                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSSUS,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el Stenbacka', PERIODOSSUS,PERIODOSSUS[-1])
                 dfMap=[];
                 for departamento in DEPARTAMENTOSSUS:
                     if SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)].empty==True:
@@ -3945,7 +4521,7 @@ $$i = 1, 2, ..., n$$
                 AgGrid(SusgroupPart3)
                 st.plotly_chart(fig5,use_container_width=True)
                 st.markdown('#### Visualización departamental del IHH')
-                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSSUS,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular el IHH', PERIODOSSUS,PERIODOSSUS[-1])
                 dfMap=[];
                 for departamento in DEPARTAMENTOSSUS:
                     if SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)].empty==True:
@@ -4056,7 +4632,7 @@ $$i = 1, 2, ..., n$$
             if select_variable == "Suscriptores":
                 st.write(r"""##### <center>Visualización de la evolución de la media entrópica en el departamento seleccionado</center>""",unsafe_allow_html=True)
                 st.plotly_chart(fig7,use_container_width=True)      
-                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSSUS,'2021-T2')
+                periodoME=st.select_slider('Escoja un periodo para calcular la media entrópica', PERIODOSSUS,PERIODOSSUS[-1])
                 MEperiodTableSus=MediaEntropica(SuscriptoresTV[(SuscriptoresTV['departamento']==DPTO)&(SuscriptoresTV['periodo']==periodoME)],'suscriptores')[1] 
                 
                 dfMap=[];
@@ -4145,6 +4721,86 @@ $$i = 1, 2, ..., n$$
                 fig12=PlotlyPenetracion(PenetracionDpto)
                 AgGrid(PenetracionDpto[['periodo','departamento','suscriptores','hogares','penetracion']])
                 st.plotly_chart(fig12,use_container_width=True)
+                
+        if select_indicador == 'Dominancia':
+            for periodo in PERIODOSSUS:
+                prSus=SusdptoTV[(SusdptoTV['departamento']==DPTO)&(SusdptoTV['periodo']==periodo)]
+                prSus.insert(3,'participacion',(prSus['suscriptores']/prSus['suscriptores'].sum())*100)
+                prSus.insert(4,'IHH',IHH(prSus,'suscriptores'))
+                prSus.insert(5,'Dominancia',Dominancia(prSus,'suscriptores'))
+                dfSuscriptores4.append(prSus.sort_values(by='participacion',ascending=False))
+            SusgroupPart4=pd.concat(dfSuscriptores4)
+            SusgroupPart4.participacion=SusgroupPart4.participacion.round(2)
+            DomSus=SusgroupPart4.groupby(['periodo'])['Dominancia'].mean().reset_index()    
+            
+            fig13=PlotlyDominancia(DomSus)
+
+            if select_variable == "Suscriptores":
+                AgGrid(SusgroupPart4)
+                st.plotly_chart(fig13,use_container_width=True)
+                st.markdown('#### Visualización departamental de la dominancia')
+                periodoME=st.select_slider('Escoja un periodo para calcular la dominancia', PERIODOSSUS,PERIODOSSUS[-1])
+                dfMap=[];
+                for departamento in DEPARTAMENTOSSUS:
+                    if SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)].empty==True:
+                        pass
+                    else:    
+                        prSus=SusdptoTV[(SusdptoTV['departamento']==departamento)&(SusdptoTV['periodo']==periodoME)]
+                        prSus.insert(3,'participacion',Participacion(prSus,'suscriptores'))
+                        prSus.insert(4,'IHH',IHH(prSus,'suscriptores'))
+                        prSus.insert(4,'Dominancia',Dominancia(prSus,'suscriptores'))
+                        DomDpto=prSus.groupby(['id_departamento','departamento'])['Dominancia'].mean().reset_index()
+                        dfMap.append(DomDpto) 
+                DomMap=pd.concat(dfMap).reset_index().drop('index',axis=1)              
+                departamentos_df=gdf.merge(DomMap, on='id_departamento')
+
+                colombia_map = folium.Map(width='100%',location=[4.570868, -74.297333], zoom_start=5,tiles='cartodbpositron')
+                tiles = ['stamenwatercolor', 'cartodbpositron', 'openstreetmap', 'stamenterrain']
+                for tile in tiles:
+                    folium.TileLayer(tile).add_to(colombia_map)
+                choropleth=folium.Choropleth(
+                    geo_data=Colombian_DPTO,
+                    data=departamentos_df,
+                    columns=['id_departamento', 'Dominancia'],
+                    key_on='feature.properties.DPTO',
+                    fill_color='Oranges', 
+                    fill_opacity=0.9, 
+                    line_opacity=0.9,
+                    legend_name='Dominancia',
+                    #bins=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
+                    smooth_factor=0).add_to(colombia_map)
+                # Adicionar nombres del departamento
+                style_function = "font-size: 15px; font-weight: bold"
+                choropleth.geojson.add_child(
+                    folium.features.GeoJsonTooltip(['NOMBRE_DPT'], style=style_function, labels=False))
+                folium.LayerControl().add_to(colombia_map)
+
+                #Adicionar valores velocidad
+                style_function = lambda x: {'fillColor': '#ffffff', 
+                                            'color':'#000000', 
+                                            'fillOpacity': 0.1, 
+                                            'weight': 0.1}
+                highlight_function = lambda x: {'fillColor': '#000000', 
+                                                'color':'#000000', 
+                                                'fillOpacity': 0.50, 
+                                                'weight': 0.1}
+                NIL = folium.features.GeoJson(
+                    data = departamentos_df,
+                    style_function=style_function, 
+                    control=False,
+                    highlight_function=highlight_function, 
+                    tooltip=folium.features.GeoJsonTooltip(
+                        fields=['id_departamento','departamento_y','Dominancia'],
+                        aliases=['ID Departamento','Departamento','Dominancia'],
+                        style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                    )
+                )
+                colombia_map.add_child(NIL)
+                colombia_map.keep_in_front(NIL)
+                col1, col2 ,col3= st.columns([1.5,4,1])
+                with col2:
+                    folium_static(colombia_map,width=480)
+                
    
 if select_mercado == 'Telefonía móvil':   
     st.title('Telefonía móvil') 
