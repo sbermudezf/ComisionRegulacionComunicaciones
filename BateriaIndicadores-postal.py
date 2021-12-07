@@ -305,7 +305,7 @@ LogoMercadoTIC="https://upload.wikimedia.org/wikipedia/commons/4/41/Noun_project
 # Set page title and favicon.
 
 st.set_page_config(
-    page_title="Batería de indicadores", page_icon=LogoComision,layout="wide",initial_sidebar_state="expanded")
+    page_title="Batería de indicadores postales", page_icon=LogoComision,layout="wide",initial_sidebar_state="expanded")
 
 
 st.markdown("""<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">""",unsafe_allow_html=True)     
@@ -507,7 +507,7 @@ if select_ambito =='Nacional':
 
     De acuerdo con Stazhkova, Kotcofana & Protasov (2017), para un $n = 3$ se pueden considerar los siguientes rangos de concentración para un mercado:
 
-    | Concetración | Rango         |
+    | Concentración| Rango         |
     |--------------|---------------|
     | Baja         | $<0,45$       |
     | Moderada     | $0,45 - 0,70$ |
@@ -521,7 +521,7 @@ if select_ambito =='Nacional':
                     with st.expander("Información adicional IHH"):
                         st.write("La fórmula del IHH está dada como")
                         st.latex(r'''IHH=\sum_{i=1}^{n}S_{i}^{2}''')
-                        st.write(r"""**Donde:**
+                        st.write(r""" **Donde:**
     -   $S_{i}$ es la participación de mercado de la variable analizada.
     -   $n$ es el número de empresas más grandes consideradas.
 
@@ -533,7 +533,7 @@ if select_ambito =='Nacional':
     | Desconcentrado            | $100 - 1500$   |
     | Moderadamente concentrado | $>1500 - 2500$ |
     | Altamente concentrado     | $>2500$        |                
-                    """)
+    """)
                 if select_indicador == 'Linda':         
                     st.write("### Índice de Linda")               
                     st.markdown("Este índice es utilizado para medir la desigualdad entre diferentes cuotas de mercado e identificar posibles oligopolios. El índice tomará valores cercanos a 1 en la medida que la participación en el mercado del grupo de empresas grandes es mayor que la participación del grupo de empresas pequeñas.")                    
@@ -554,10 +554,35 @@ if select_ambito =='Nacional':
     | Alta            | $>1$          |""",unsafe_allow_html=True)
                 if select_indicador == 'Penetración':
                     st.write("### Índice de penetración")
-                    st.markdown("El índice de penetración es usado para...") 
+                    st.markdown(" La penetración de mercado mide el grado de utilización o alcance de un producto o servicio en relación con el tamaño del mercado potencial estimado para ese producto o servicio.") 
+                    with st.expander('Información adicional índice de penetración'):
+                        st.markdown(r'''El indicador de penetración, de manera general, se puede definir como: ''')
+                        st.latex(r"""\textrm{Penetracion}(t)=\frac{\textrm{Transacciones}(t)}{\textrm{Tamaño total del mercado}(t)}""")
+                        st.markdown(r"""En donde las transacciones en el periodo t pueden representarse, en el caso de los mercados de comunicaciones,
+                    mediante variables como el número de líneas, accesos, conexiones, suscripciones tráfico o envíos.
+                    Por su parte, el tamaño total del mercado suele ser aproximado mediante variables demográficas como el número de habitantes u hogares, entre otras.""")                    
                 if select_indicador == 'Dominancia':
                     st.write("### Índice de dominancia")
-                    st.markdown("El índice de dominancia es usado para...")                     
+                    st.markdown("El índice de dominancia se calcula de forma similar al IHH, tomando, en lugar de las participaciones directas en el mercado, la participación de cada empresa en el cálculo original del IHH (Lis-Gutiérrez, 2013).")
+                    with st.expander('Información adicional índice de dominancia'):
+                        st.write("La fórmula de la dominancia está dada como")
+                        st.latex(r'''ID=\sum_{i=1}^{n}h_{i}^{2}''')
+                        st.write(r""" **Donde:**
+    -   $h_{i}=S_{i}^{2}/IHH$                 
+    -   $S_{i}$ es la participación de mercado de la variable analizada.
+    -   $n$ es el número de empresas más grandes consideradas.
+
+    Igual que para el IHH, el rango de valores de éste índice está entre $1/n$ y $1$. Se han establecido rangos de niveles de concentración, asociados con barreras a la entrada, como se muestra en el siguiente cuadro.
+
+    | Concentración                           | Rango          |
+    |-----------------------------------------|----------------|
+    | Baja barreras a la entrada              | $<0.25$        |
+    | Nivel medio de barreras a la entrada    | $0.25 - 0.50$  |
+    | Nivel moderado de barreras a la entrada | $0.50 - 0.75$  |
+    | Altas barreras a la entrada             | $>0.75$        |                
+    """)
+                        st.markdown("*Fuente: Estos rangos se toman de “Concentración o desconcentración del mercado de telefonía móvil de Colombia: Una aproximación”. Martinez, O. J. (2017).*")
+
 
             ## Cálculo de los indicadores
                 if select_indicador == 'Stenbacka':
@@ -709,7 +734,6 @@ if select_ambito =='Nacional':
                         AgGrid(InggroupPart4)
                         st.plotly_chart(fig14,use_container_width=True)
 
-
             if select_dimension == 'Municipal':            
                 st.write('#### Desagregación municipal') 
                 select_indicador = st.sidebar.selectbox('Indicador',['Stenbacka', 'Concentración','IHH','Linda','Penetración','Dominancia'])
@@ -789,10 +813,35 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Alta            | $>1$          |""",unsafe_allow_html=True)
                 if select_indicador == 'Penetración':
                     st.write("### Índice de penetración")
-                    st.markdown("El índice de penetración es usado para...")  
+                    st.markdown(" La penetración de mercado mide el grado de utilización o alcance de un producto o servicio en relación con el tamaño del mercado potencial estimado para ese producto o servicio.") 
+                    with st.expander('Información adicional índice de penetración'):
+                        st.markdown(r'''El indicador de penetración, de manera general, se puede definir como: ''')
+                        st.latex(r"""\textrm{Penetracion}(t)=\frac{\textrm{Transacciones}(t)}{\textrm{Tamaño total del mercado}(t)}""")
+                        st.markdown(r"""En donde las transacciones en el periodo t pueden representarse, en el caso de los mercados de comunicaciones,
+                    mediante variables como el número de líneas, accesos, conexiones, suscripciones tráfico o envíos.
+                    Por su parte, el tamaño total del mercado suele ser aproximado mediante variables demográficas como el número de habitantes u hogares, entre otras.""")                    
                 if select_indicador == 'Dominancia':
                     st.write("### Índice de dominancia")
-                    st.markdown("El índice de dominancia es usado para...")                      
+                    st.markdown("El índice de dominancia se calcula de forma similar al IHH, tomando, en lugar de las participaciones directas en el mercado, la participación de cada empresa en el cálculo original del IHH (Lis-Gutiérrez, 2013).")
+                    with st.expander('Información adicional índice de dominancia'):
+                        st.write("La fórmula de la dominancia está dada como")
+                        st.latex(r'''ID=\sum_{i=1}^{n}h_{i}^{2}''')
+                        st.write(r""" **Donde:**
+    -   $h_{i}=S_{i}^{2}/IHH$                 
+    -   $S_{i}$ es la participación de mercado de la variable analizada.
+    -   $n$ es el número de empresas más grandes consideradas.
+
+    Igual que para el IHH, el rango de valores de éste índice está entre $1/n$ y $1$. Se han establecido rangos de niveles de concentración, asociados con barreras a la entrada, como se muestra en el siguiente cuadro.
+
+    | Concentración                           | Rango          |
+    |-----------------------------------------|----------------|
+    | Baja barreras a la entrada              | $<0.25$        |
+    | Nivel medio de barreras a la entrada    | $0.25 - 0.50$  |
+    | Nivel moderado de barreras a la entrada | $0.50 - 0.75$  |
+    | Altas barreras a la entrada             | $>0.75$        |                
+    """)
+                        st.markdown("*Fuente: Estos rangos se toman de “Concentración o desconcentración del mercado de telefonía móvil de Colombia: Una aproximación”. Martinez, O. J. (2017).*")
+                     
  
             ## Cálculo de los indicadores
                 if select_indicador == 'Stenbacka':
@@ -994,7 +1043,6 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                         AgGrid(InggroupPart4)
                         st.plotly_chart(fig14,use_container_width=True)
 
-
             if select_dimension == 'Departamental':            
                 st.write('#### Desagregación departamental') 
                 select_indicador = st.sidebar.selectbox('Indicador',['Stenbacka', 'Concentración','IHH','Linda','Media entrópica','Penetración','Dominancia'])
@@ -1134,10 +1182,35 @@ $$i = 1, 2, ..., n$$
                 """)
                 if select_indicador == 'Penetración':
                     st.write("### Índice de penetración")
-                    st.markdown("El índice de penetración es usado para...") 
+                    st.markdown(" La penetración de mercado mide el grado de utilización o alcance de un producto o servicio en relación con el tamaño del mercado potencial estimado para ese producto o servicio.") 
+                    with st.expander('Información adicional índice de penetración'):
+                        st.markdown(r'''El indicador de penetración, de manera general, se puede definir como: ''')
+                        st.latex(r"""\textrm{Penetracion}(t)=\frac{\textrm{Transacciones}(t)}{\textrm{Tamaño total del mercado}(t)}""")
+                        st.markdown(r"""En donde las transacciones en el periodo t pueden representarse, en el caso de los mercados de comunicaciones,
+                    mediante variables como el número de líneas, accesos, conexiones, suscripciones tráfico o envíos.
+                    Por su parte, el tamaño total del mercado suele ser aproximado mediante variables demográficas como el número de habitantes u hogares, entre otras.""")                    
                 if select_indicador == 'Dominancia':
                     st.write("### Índice de dominancia")
-                    st.markdown("El índice de dominancia es usado para...")                     
+                    st.markdown("El índice de dominancia se calcula de forma similar al IHH, tomando, en lugar de las participaciones directas en el mercado, la participación de cada empresa en el cálculo original del IHH (Lis-Gutiérrez, 2013).")
+                    with st.expander('Información adicional índice de dominancia'):
+                        st.write("La fórmula de la dominancia está dada como")
+                        st.latex(r'''ID=\sum_{i=1}^{n}h_{i}^{2}''')
+                        st.write(r""" **Donde:**
+    -   $h_{i}=S_{i}^{2}/IHH$                 
+    -   $S_{i}$ es la participación de mercado de la variable analizada.
+    -   $n$ es el número de empresas más grandes consideradas.
+
+    Igual que para el IHH, el rango de valores de éste índice está entre $1/n$ y $1$. Se han establecido rangos de niveles de concentración, asociados con barreras a la entrada, como se muestra en el siguiente cuadro.
+
+    | Concentración                           | Rango          |
+    |-----------------------------------------|----------------|
+    | Baja barreras a la entrada              | $<0.25$        |
+    | Nivel medio de barreras a la entrada    | $0.25 - 0.50$  |
+    | Nivel moderado de barreras a la entrada | $0.50 - 0.75$  |
+    | Altas barreras a la entrada             | $>0.75$        |                
+    """)
+                        st.markdown("*Fuente: Estos rangos se toman de “Concentración o desconcentración del mercado de telefonía móvil de Colombia: Una aproximación”. Martinez, O. J. (2017).*")
+                  
 
             ## Cálculo de los indicadores
                 if select_indicador == 'Stenbacka':
@@ -1729,10 +1802,35 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Alta            | $>1$          |""",unsafe_allow_html=True)
                 if select_indicador == 'Penetración':
                     st.write("### Índice de penetración")
-                    st.markdown("El índice de penetración es usado para...")   
+                    st.markdown(" La penetración de mercado mide el grado de utilización o alcance de un producto o servicio en relación con el tamaño del mercado potencial estimado para ese producto o servicio.") 
+                    with st.expander('Información adicional índice de penetración'):
+                        st.markdown(r'''El indicador de penetración, de manera general, se puede definir como: ''')
+                        st.latex(r"""\textrm{Penetracion}(t)=\frac{\textrm{Transacciones}(t)}{\textrm{Tamaño total del mercado}(t)}""")
+                        st.markdown(r"""En donde las transacciones en el periodo t pueden representarse, en el caso de los mercados de comunicaciones,
+                    mediante variables como el número de líneas, accesos, conexiones, suscripciones tráfico o envíos.
+                    Por su parte, el tamaño total del mercado suele ser aproximado mediante variables demográficas como el número de habitantes u hogares, entre otras.""")                    
                 if select_indicador == 'Dominancia':
                     st.write("### Índice de dominancia")
-                    st.markdown("El índice de dominancia es usado para...")                       
+                    st.markdown("El índice de dominancia se calcula de forma similar al IHH, tomando, en lugar de las participaciones directas en el mercado, la participación de cada empresa en el cálculo original del IHH (Lis-Gutiérrez, 2013).")
+                    with st.expander('Información adicional índice de dominancia'):
+                        st.write("La fórmula de la dominancia está dada como")
+                        st.latex(r'''ID=\sum_{i=1}^{n}h_{i}^{2}''')
+                        st.write(r""" **Donde:**
+    -   $h_{i}=S_{i}^{2}/IHH$                 
+    -   $S_{i}$ es la participación de mercado de la variable analizada.
+    -   $n$ es el número de empresas más grandes consideradas.
+
+    Igual que para el IHH, el rango de valores de éste índice está entre $1/n$ y $1$. Se han establecido rangos de niveles de concentración, asociados con barreras a la entrada, como se muestra en el siguiente cuadro.
+
+    | Concentración                           | Rango          |
+    |-----------------------------------------|----------------|
+    | Baja barreras a la entrada              | $<0.25$        |
+    | Nivel medio de barreras a la entrada    | $0.25 - 0.50$  |
+    | Nivel moderado de barreras a la entrada | $0.50 - 0.75$  |
+    | Altas barreras a la entrada             | $>0.75$        |                
+    """)
+                        st.markdown("*Fuente: Estos rangos se toman de “Concentración o desconcentración del mercado de telefonía móvil de Colombia: Una aproximación”. Martinez, O. J. (2017).*")
+                 
 
                 ## Cálculo de los indicadores
                 if select_indicador == 'Stenbacka':
@@ -1977,10 +2075,35 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
 | Alta            | $>1$          |""",unsafe_allow_html=True)
                 if select_indicador == 'Penetración':
                     st.write("### Índice de penetración")
-                    st.markdown("El índice de penetración es usado para...") 
+                    st.markdown(" La penetración de mercado mide el grado de utilización o alcance de un producto o servicio en relación con el tamaño del mercado potencial estimado para ese producto o servicio.") 
+                    with st.expander('Información adicional índice de penetración'):
+                        st.markdown(r'''El indicador de penetración, de manera general, se puede definir como: ''')
+                        st.latex(r"""\textrm{Penetracion}(t)=\frac{\textrm{Transacciones}(t)}{\textrm{Tamaño total del mercado}(t)}""")
+                        st.markdown(r"""En donde las transacciones en el periodo t pueden representarse, en el caso de los mercados de comunicaciones,
+                    mediante variables como el número de líneas, accesos, conexiones, suscripciones tráfico o envíos.
+                    Por su parte, el tamaño total del mercado suele ser aproximado mediante variables demográficas como el número de habitantes u hogares, entre otras.""")                    
                 if select_indicador == 'Dominancia':
                     st.write("### Índice de dominancia")
-                    st.markdown("El índice de dominancia es usado para...")                     
+                    st.markdown("El índice de dominancia se calcula de forma similar al IHH, tomando, en lugar de las participaciones directas en el mercado, la participación de cada empresa en el cálculo original del IHH (Lis-Gutiérrez, 2013).")
+                    with st.expander('Información adicional índice de dominancia'):
+                        st.write("La fórmula de la dominancia está dada como")
+                        st.latex(r'''ID=\sum_{i=1}^{n}h_{i}^{2}''')
+                        st.write(r""" **Donde:**
+    -   $h_{i}=S_{i}^{2}/IHH$                 
+    -   $S_{i}$ es la participación de mercado de la variable analizada.
+    -   $n$ es el número de empresas más grandes consideradas.
+
+    Igual que para el IHH, el rango de valores de éste índice está entre $1/n$ y $1$. Se han establecido rangos de niveles de concentración, asociados con barreras a la entrada, como se muestra en el siguiente cuadro.
+
+    | Concentración                           | Rango          |
+    |-----------------------------------------|----------------|
+    | Baja barreras a la entrada              | $<0.25$        |
+    | Nivel medio de barreras a la entrada    | $0.25 - 0.50$  |
+    | Nivel moderado de barreras a la entrada | $0.50 - 0.75$  |
+    | Altas barreras a la entrada             | $>0.75$        |                
+    """)
+                        st.markdown("*Fuente: Estos rangos se toman de “Concentración o desconcentración del mercado de telefonía móvil de Colombia: Una aproximación”. Martinez, O. J. (2017).*")
+                    
 
             ## Cálculo de los indicadores
                 if select_indicador == 'Stenbacka':
@@ -2182,7 +2305,6 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
                         AgGrid(InggroupPart4)
                         st.plotly_chart(fig14,use_container_width=True)
 
-
             if select_dimension == 'Departamental':            
                 st.write('#### Desagregación departamental') 
                 select_indicador = st.sidebar.selectbox('Indicador',['Stenbacka', 'Concentración','IHH','Linda','Penetración','Media entrópica','Dominancia'])
@@ -2322,10 +2444,35 @@ $$i = 1, 2, ..., n$$
                 """)
                 if select_indicador == 'Penetración':
                     st.write("### Índice de penetración")
-                    st.markdown("El índice de penetración es usado para...")  
+                    st.markdown(" La penetración de mercado mide el grado de utilización o alcance de un producto o servicio en relación con el tamaño del mercado potencial estimado para ese producto o servicio.") 
+                    with st.expander('Información adicional índice de penetración'):
+                        st.markdown(r'''El indicador de penetración, de manera general, se puede definir como: ''')
+                        st.latex(r"""\textrm{Penetracion}(t)=\frac{\textrm{Transacciones}(t)}{\textrm{Tamaño total del mercado}(t)}""")
+                        st.markdown(r"""En donde las transacciones en el periodo t pueden representarse, en el caso de los mercados de comunicaciones,
+                    mediante variables como el número de líneas, accesos, conexiones, suscripciones tráfico o envíos.
+                    Por su parte, el tamaño total del mercado suele ser aproximado mediante variables demográficas como el número de habitantes u hogares, entre otras.""")                    
                 if select_indicador == 'Dominancia':
                     st.write("### Índice de dominancia")
-                    st.markdown("El índice de dominancia es usado para...")                      
+                    st.markdown("El índice de dominancia se calcula de forma similar al IHH, tomando, en lugar de las participaciones directas en el mercado, la participación de cada empresa en el cálculo original del IHH (Lis-Gutiérrez, 2013).")
+                    with st.expander('Información adicional índice de dominancia'):
+                        st.write("La fórmula de la dominancia está dada como")
+                        st.latex(r'''ID=\sum_{i=1}^{n}h_{i}^{2}''')
+                        st.write(r""" **Donde:**
+    -   $h_{i}=S_{i}^{2}/IHH$                 
+    -   $S_{i}$ es la participación de mercado de la variable analizada.
+    -   $n$ es el número de empresas más grandes consideradas.
+
+    Igual que para el IHH, el rango de valores de éste índice está entre $1/n$ y $1$. Se han establecido rangos de niveles de concentración, asociados con barreras a la entrada, como se muestra en el siguiente cuadro.
+
+    | Concentración                           | Rango          |
+    |-----------------------------------------|----------------|
+    | Baja barreras a la entrada              | $<0.25$        |
+    | Nivel medio de barreras a la entrada    | $0.25 - 0.50$  |
+    | Nivel moderado de barreras a la entrada | $0.50 - 0.75$  |
+    | Altas barreras a la entrada             | $>0.75$        |                
+    """)
+                        st.markdown("*Fuente: Estos rangos se toman de “Concentración o desconcentración del mercado de telefonía móvil de Colombia: Una aproximación”. Martinez, O. J. (2017).*")
+                   
 
                 ##Cálculo de los indicadores
                 if select_indicador == 'Stenbacka':
