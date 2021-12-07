@@ -211,7 +211,7 @@ def PlotlyDominancia(df):
         '<br><b>Dominancia</b>: %{y:.4f}<br>',name=''))
     fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
     fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Dominancia", row=1, col=1)
-    fig.update_layout(height=550,title="<b> Índice Herfindahl-Hirschman</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
+    fig.update_layout(height=550,title="<b> Índice de dominancia</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
     fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
     fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
@@ -421,9 +421,15 @@ Personas.columns=[x.lower() for x in Personas.columns]
 Personas.id_municipio=Personas.id_municipio.astype(str)
 Personas.id_departamento=Personas.id_departamento.astype(str)
 Personas.anno=Personas.anno.astype('str')
-
-
-
+##DIVIPOLA
+Divpola=pd.read_csv("https://raw.githubusercontent.com/sbermudezf/ComisionRegulacionComunicaciones/main/DIVIPOLA-_C_digos_municipios.csv",delimiter=';').dropna()
+Divpola['Código Municipio']=Divpola['Código Municipio'].astype('int64')
+Divpola=Divpola.rename(columns={'Código Departamento':'id_departamento','Código Municipio':'codigo_municipio','Nombre Departamento':'departamento','Nombre Municipio':'municipio'})
+Divpola=Divpola[['codigo_municipio','municipio','departamento','id_departamento']]
+Postales=Postales.merge(Divpola, on='codigo_municipio')
+Postales.insert(8,'CodMuni',Postales['municipio']+'-'+Postales['codigo_municipio'].astype('str'))
+Postales.drop('codigo_municipio',axis=1,inplace=True)
+Postales=Postales.rename(columns={'CodMuni':'codigo_municipio'})
 select_ambito = st.sidebar.selectbox('Seleccionar ámbito de aplicación',
                                     ['Nacional','Internacional'])
                                     
@@ -459,24 +465,20 @@ if select_ambito =='Nacional':
             
             DocumentosdptoIng=Documentos.copy()
             DocumentosdptoIng.codigo_municipio=DocumentosdptoIng.codigo_municipio.astype('str')
-            DocumentosdptoIng.insert(3,'id_departamento',DocumentosdptoIng.codigo_municipio.apply(id_dpto))
-            DocumentosdptoIng=DocumentosdptoIng.groupby(['periodo','empresa','id_empresa','id_departamento'])['ingresos'].sum().reset_index()
+            DocumentosdptoIng=DocumentosdptoIng.groupby(['periodo','empresa','id_empresa','id_departamento','departamento'])['ingresos'].sum().reset_index()
             DocumentosdptoEnv=Documentos.copy()
             DocumentosdptoEnv.codigo_municipio=DocumentosdptoEnv.codigo_municipio.astype('str')
-            DocumentosdptoEnv.insert(3,'id_departamento',DocumentosdptoEnv.codigo_municipio.apply(id_dpto))
-            DocumentosdptoEnv=DocumentosdptoEnv.groupby(['periodo','empresa','id_empresa','id_departamento'])['numero_total_envios'].sum().reset_index()     
+            DocumentosdptoEnv=DocumentosdptoEnv.groupby(['periodo','empresa','id_empresa','id_departamento','departamento',])['numero_total_envios'].sum().reset_index()     
 
-            DocumentosEnv=Documentos[['periodo','empresa','id_empresa','codigo_municipio','numero_total_envios']]
+            DocumentosEnv=Documentos[['periodo','empresa','id_empresa','codigo_municipio','id_departamento','numero_total_envios']]
             DocumentosEnv.codigo_municipio=DocumentosEnv.codigo_municipio.astype('str')
-            DocumentosEnv.insert(3,'id_departamento',DocumentosEnv.codigo_municipio.apply(id_dpto))
             DocumentosEnv=DocumentosEnv.rename(columns={'codigo_municipio':'id_municipio'})
-            DocumentosIng=Documentos[['periodo','empresa','id_empresa','codigo_municipio','ingresos']]
+            DocumentosIng=Documentos[['periodo','empresa','id_empresa','codigo_municipio','id_departamento','ingresos']]
             DocumentosIng.codigo_municipio=DocumentosIng.codigo_municipio.astype('str')
-            DocumentosIng.insert(3,'id_departamento',DocumentosIng.codigo_municipio.apply(id_dpto))     
             DocumentosIng=DocumentosIng.rename(columns={'codigo_municipio':'id_municipio'})
 
             with st.expander('Datos documentos'):
-                AgGrid(Documentos)
+                AgGrid(Documentos[['periodo','id_empresa','empresa','codigo_municipio','tipo_objeto','ambito','numero_total_envios','ingresos']])
             if select_dimension == 'Nacional':      
                 st.write('#### Agregación nacional')     
                 select_indicador = st.sidebar.selectbox('Indicador',['Stenbacka', 'Concentración','IHH','Linda','Penetración','Dominancia'])
@@ -1641,20 +1643,16 @@ $$i = 1, 2, ..., n$$
             
             PaquetesdptoIng=PaquetesPeso.copy()
             PaquetesdptoIng.codigo_municipio=PaquetesdptoIng.codigo_municipio.astype('str')
-            PaquetesdptoIng.insert(3,'id_departamento',PaquetesdptoIng.codigo_municipio.apply(id_dpto))
             PaquetesdptoIng=PaquetesdptoIng.groupby(['periodo','empresa','id_empresa','id_departamento'])['ingresos'].sum().reset_index()
             PaquetesdptoEnv=PaquetesPeso.copy()
             PaquetesdptoEnv.codigo_municipio=PaquetesdptoEnv.codigo_municipio.astype('str')
-            PaquetesdptoEnv.insert(3,'id_departamento',PaquetesdptoEnv.codigo_municipio.apply(id_dpto))
             PaquetesdptoEnv=PaquetesdptoEnv.groupby(['periodo','empresa','id_empresa','id_departamento'])['numero_total_envios'].sum().reset_index()     
 
-            PaquetesEnv=PaquetesPeso[['periodo','empresa','id_empresa','codigo_municipio','rango_peso_envio','numero_total_envios']]
+            PaquetesEnv=PaquetesPeso[['periodo','empresa','id_empresa','codigo_municipio','id_departamento','rango_peso_envio','numero_total_envios']]
             PaquetesEnv.codigo_municipio=PaquetesEnv.codigo_municipio.astype('str')
-            PaquetesEnv.insert(3,'id_departamento',PaquetesEnv.codigo_municipio.apply(id_dpto))
             PaquetesEnv=PaquetesEnv.rename(columns={'codigo_municipio':'id_municipio'})
-            PaquetesIng=PaquetesPeso[['periodo','empresa','id_empresa','codigo_municipio','rango_peso_envio','ingresos']]
-            PaquetesIng.codigo_municipio=PaquetesIng.codigo_municipio.astype('str')
-            PaquetesIng.insert(3,'id_departamento',PaquetesIng.codigo_municipio.apply(id_dpto))     
+            PaquetesIng=PaquetesPeso[['periodo','empresa','id_empresa','codigo_municipio','id_departamento','rango_peso_envio','ingresos']]
+            PaquetesIng.codigo_municipio=PaquetesIng.codigo_municipio.astype('str') 
             PaquetesIng=PaquetesIng.rename(columns={'codigo_municipio':'id_municipio'})            
              
             if select_dimension == 'Nacional':       
