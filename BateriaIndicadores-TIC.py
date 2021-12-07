@@ -139,6 +139,11 @@ def Dominancia(df,column):
     IHH=round(sum([elem**2 for elem in part]),2)
     dom=round(sum([elem**4/IHH**2 for elem in part]),3)
     return dom    
+@st.cache
+def EntropiaRelativa(df,column):
+    part=(df[column]/df[column].sum())
+    IE=round(sum([elem*(np.log(1/elem)) for elem in part])/np.log(len(part)),5)
+    return IE
 ##
 ##Definición funciones para graficar los indicadores:
 def PlotlyStenbacka(df):
@@ -223,11 +228,27 @@ def PlotlyDominancia(df):
         '<br><b>Dominancia</b>: %{y:.4f}<br>',name=''))
     fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
     fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Dominancia", row=1, col=1)
-    fig.update_layout(height=550,title="<b> Índice Herfindahl-Hirschman</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
+    fig.update_layout(height=550,title="<b> Índice de dominancia</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
     fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
     fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
     fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
     fig.update_traces(marker_color='rgb(204,102,0)', marker_line_color='rgb(102,51,0)',
+                      marker_line_width=1.5, opacity=0.4)
+    return fig    
+
+def PlotlyEntropiaRel(df):    
+    fig = make_subplots(rows=1,cols=1)
+    fig.add_trace(go.Bar(x=df['periodo'], y=df['Entropia_Relativa'],
+                         hovertemplate =
+        '<br><b>Periodo</b>: %{x}<br>'+                         
+        '<br><b>Entropía relativa</b>: %{y:.4f}<br>',name=''))
+    fig.update_xaxes(tickangle=0, tickfont=dict(family='Helvetica', color='black', size=12),title_text=None,row=1, col=1)
+    fig.update_yaxes(tickfont=dict(family='Helvetica', color='black', size=14),titlefont_size=14, title_text="Entropía relativa", row=1, col=1)
+    fig.update_layout(height=550,title="<b> Índice de entropía relativa</b>",title_x=0.5,legend_title=None,font=dict(family="Helvetica",color=" black"))
+    fig.update_layout(showlegend=False,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_xaxes(tickangle=-90,showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(220, 220, 220, 0.4)')
+    fig.update_traces(marker_color='rgb(255,102,178)', marker_line_color='rgb(102,0,51)',
                       marker_line_width=1.5, opacity=0.4)
     return fig    
 
@@ -4045,7 +4066,6 @@ De acuerdo con Martinez (2017), se pueden considerar los siguientes rangos de co
             if select_variable == "Ingresos":
                 AgGrid(InggroupPart4)
                 st.plotly_chart(fig14,use_container_width=True)
-
             
     if select_dimension == 'Municipal':
         select_indicador = st.sidebar.selectbox('Indicador',
@@ -4800,8 +4820,7 @@ $$i = 1, 2, ..., n$$
                 col1, col2 ,col3= st.columns([1.5,4,1])
                 with col2:
                     folium_static(colombia_map,width=480)
-                
-   
+                   
 if select_mercado == 'Telefonía móvil':   
     st.title('Telefonía móvil') 
     Trafico=ReadApiVOZTraf()
