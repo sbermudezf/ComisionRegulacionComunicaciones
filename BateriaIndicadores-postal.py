@@ -334,6 +334,7 @@ st.markdown("""<style type="text/css">
     z-index:9999;
     top:80px;
     left:0;}
+    .css-m70y {display:none}
     .barra-superior{top: 0;
     position: fixed;
     background-color: #27348b;
